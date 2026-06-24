@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Combo Builder Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #c9a96e;
+    --gold-light: #e8d5b0;
+    --dark: #0d0d0d;
+    --dark2: #161410;
+    --dark3: #1e1a16;
+    --cream: #f5f0e8;
+    --text: #d4c9b8;
+    --border: rgba(201,169,110,0.2);
+    --budget: 350;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--dark);
+    color: var(--text);
+    font-family: 'Jost', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    background-image: radial-gradient(ellipse at 20% 20%, rgba(201,169,110,0.05) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(201,169,110,0.03) 0%, transparent 50%);
+  }
+
+  header { text-align: center; padding: 50px 20px 30px; border-bottom: 1px solid var(--border); }
+  header h1 { font-family: 'Cormorant Garamond', serif; font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 300; color: var(--cream); letter-spacing: 0.05em; }
+  header p { font-size: 0.8rem; color: var(--gold); letter-spacing: 0.3em; text-transform: uppercase; margin-top: 8px; }
+
+  .budget-bar { position: sticky; top: 0; z-index: 100; background: var(--dark2); border-bottom: 1px solid var(--border); padding: 14px 30px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+  .budget-label { font-size: 0.72rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); white-space: nowrap; }
+  .budget-track { flex: 1; min-width: 120px; height: 3px; background: rgba(255,255,255,0.08); border-radius: 99px; overflow: hidden; }
+  .budget-fill { height: 100%; background: linear-gradient(90deg, var(--gold), #e8c97a); border-radius: 99px; transition: width 0.4s cubic-bezier(0.4,0,0.2,1); width: 0%; }
+  .budget-fill.over { background: linear-gradient(90deg, #c0392b, #e74c3c); }
+  .budget-numbers { font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; white-space: nowrap; }
+  .budget-numbers .used { color: var(--gold); }
+  .budget-numbers .over-color { color: #e74c3c; }
+
+  .main { display: grid; grid-template-columns: 1fr 340px; gap: 30px; max-width: 1200px; margin: 0 auto; padding: 30px 20px; }
+  @media(max-width: 800px) { .main { grid-template-columns: 1fr; } .sidebar { order: -1; } }
+
+  .section-title { font-family: 'Cormorant Garamond', serif; font-size: 0.85rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--gold); margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+
+  .category { margin-bottom: 32px; }
+  .category-name { font-size: 0.7rem; letter-spacing: 0.3em; text-transform: uppercase; color: rgba(255,255,255,0.3); margin-bottom: 12px; }
+
+  .items-grid { display: flex; flex-direction: column; gap: 8px; }
+
+  .item-card { background: var(--dark3); border: 1px solid var(--border); border-radius: 4px; padding: 14px 18px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 12px; transition: all 0.25s ease; position: relative; }
+  .item-card:hover { border-color: rgba(201,169,110,0.45); }
+  .item-card.selected { border-color: var(--gold); background: rgba(201,169,110,0.07); }
+  
+  /* Estado bloqueado para Seaside */
+  .item-card.locked { opacity: 0.4; cursor: not-allowed; filter: grayscale(1); }
+  .lock-msg { font-size: 0.65rem; color: #e74c3c; margin-top: 4px; display: none; }
+  .item-card.locked .lock-msg { display: block; }
+
+  .item-name { font-family: 'Cormorant Garamond', serif; font-size: 1.05rem; color: var(--cream); }
+  .item-price { font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; color: var(--gold); }
+
+  .qty-control { display: flex; align-items: center; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 3px; }
+  .qty-btn { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--gold); border: none; background: transparent; font-size: 1.2rem; }
+  .qty-btn:hover { background: rgba(201,169,110,0.15); }
+  .qty-num { width: 30px; text-align: center; font-size: 0.9rem; color: var(--cream); }
+
+  .sidebar-inner { position: sticky; top: 80px; }
+  .combo-box { background: var(--dark3); border: 1px solid var(--border); border-radius: 6px; padding: 24px; }
+  .combo-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.85rem; }
+  .combo-total { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--gold); display: flex; justify-content: space-between; align-items: baseline; }
+  .combo-total-price { font-family: 'Cormorant Garamond', serif; font-size: 2rem; color: var(--cream); }
+  .combo-total-price.over { color: #e74c3c; }
+
+  .btn { width: 100%; padding: 12px; margin-top: 10px; border: 1px solid var(--border); background: transparent; color: var(--text); font-family: 'Jost', sans-serif; letter-spacing: 0.2em; text-transform: uppercase; cursor: pointer; border-radius: 3px; }
+  .btn-primary { background: var(--gold); color: var(--dark); border: none; font-weight: 500; }
+  
+  .empty-state { text-align: center; color: rgba(255,255,255,0.2); padding: 20px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Combo Builder</h1>
+  <p>Diseña tu Experiencia Ideal</p>
+</header>
+
+<div class="budget-bar">
+  <span class="budget-label">Presupuesto</span>
+  <div class="budget-track"><div class="budget-fill" id="budgetFill"></div></div>
+  <div class="budget-numbers">
+    <span class="used" id="budgetUsed">$0</span>
+    <span style="color:rgba(255,255,255,0.2)">/</span>
+    <span>$350 USD</span>
+  </div>
+</div>
+
+<div class="main">
+  <div class="categories" id="categories"></div>
+  <div class="sidebar">
+    <div class="sidebar-inner">
+      <div class="section-title">Tu Combo</div>
+      <div class="combo-box">
+        <div id="emptyState" class="empty-state">Selecciona ítems</div>
+        <ul id="comboList" style="list-style:none"></ul>
+        <div id="comboFooter" style="display:none">
+          <div class="combo-total">
+            <span style="font-size:0.7rem; text-transform:uppercase; opacity:0.6">Total</span>
+            <span class="combo-total-price" id="comboTotal">$0</span>
+          </div>
+          <p id="remaining" style="text-align:right; font-size:0.75rem; margin-top:5px"></p>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="saveCombo()">Guardar este combo</button>
+      <button class="btn" onclick="clearAll()">Limpiar todo</button>
+      
+      <div id="savedSection" style="margin-top:30px; display:none">
+        <div class="section-title">Guardados</div>
+        <div id="savedList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const BUDGET = 350;
+const items = [
+  { id: 'm50', cat: 'Masajes', name: 'Masaje 50 min', price: 100 },
+  { id: 'm80', cat: 'Masajes', name: 'Masaje 80 min', price: 125 },
+  { id: 'm50cbd', cat: 'Masajes', name: 'Masaje 50 min + CBD', price: 125 },
+  { id: 'm80cbd', cat: 'Masajes', name: 'Masaje 80 min + CBD', price: 150 },
+  { id: 'dinner', cat: 'Cenas', name: 'Cena Romántica', price: 150 },
+  { id: 'dinnerL', cat: 'Cenas', name: 'Cena + Lobster', price: 200 },
+  { id: 'dinnerLC', cat: 'Cenas', name: 'Cena + Lobster + Champ', price: 250 },
+  { id: 'baliPlaya', cat: 'Bali Beds', name: 'Bali Bed Playa', price: 150 },
+  { id: 'baliInf', cat: 'Bali Beds', name: 'Bali Bed Infinity', price: 250 },
+  { id: 'baliPool', cat: 'Bali Beds', name: 'Bali Bed Alberca', price: 100 },
+  { id: 'baliSea', cat: 'Bali Beds', name: 'Bali Bed Seaside', price: 50, requireDinner: true },
+  { id: 'pref', cat: 'Extras', name: 'Preferred Benefits', price: 200 },
+  { id: 'excur', cat: 'Extras', name: 'Ticket Excursión', price: 150 }
+];
+
+let cart = {};
+items.forEach(i => cart[i.id] = 0);
+
+function hasDinner() {
+  return cart['dinner'] > 0 || cart['dinnerL'] > 0 || cart['dinnerLC'] > 0;
+}
+
+function updateQty(id, delta) {
+  const item = items.find(i => i.id === id);
+  
+  // Lógica de restricción Seaside
+  if (item.requireDinner && !hasDinner() && delta > 0) {
+    alert("Esta Bali Bed solo está disponible al comprar una cena.");
+    return;
+  }
+
+  cart[id] = Math.max(0, cart[id] + delta);
+  
+  // Si quitamos la última cena, quitamos la Seaside bed automáticamente
+  if (!hasDinner()) cart['baliSea'] = 0;
+
+  render();
+}
+
+function render() {
+  const total = items.reduce((sum, i) => sum + (i.price * cart[i.id]), 0);
+  const isOver = total > BUDGET;
+
+  // Actualizar Barra
+  const pct = Math.min((total / BUDGET) * 100, 100);
+  document.getElementById('budgetFill').style.width = pct + '%';
+  document.getElementById('budgetFill').className = 'budget-fill' + (isOver ? ' over' : '');
+  document.getElementById('budgetUsed').textContent = `$${total}`;
+  document.getElementById('budgetUsed').className = isOver ? 'over-color' : 'used';
+
+  // Renderizar Categorías e ítems
+  const container = document.getElementById('categories');
+  if (container.innerHTML === "") { // Build once
+    const cats = [...new Set(items.map(i => i.cat))];
+    container.innerHTML = cats.map(cat => `
+      <div class="category">
+        <div class="category-name">${cat}</div>
+        <div class="items-grid">
+          ${items.filter(i => i.cat === cat).map(i => `
+            <div id="card-${i.id}" class="item-card" onclick="updateQty('${i.id}', cart['${i.id}'] > 0 ? -1 : 1)">
+              <div>
+                <div class="item-name">${i.name}</div>
+                <div class="lock-msg">Requiere Cena seleccionada</div>
+              </div>
+              <div style="display:flex; align-items:center; gap:15px">
+                <div class="item-price">$${i.price}</div>
+                <div class="qty-control">
+                  <button class="qty-btn" onclick="event.stopPropagation(); updateQty('${i.id}', -1)">−</button>
+                  <span class="qty-num" id="qty-${i.id}">0</span>
+                  <button class="qty-btn" onclick="event.stopPropagation(); updateQty('${i.id}', 1)">+</button>
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // Actualizar estados visuales de tarjetas
+  items.forEach(i => {
+    const card = document.getElementById('card-' + i.id);
+    const qtySpan = document.getElementById('qty-' + i.id);
+    qtySpan.textContent = cart[i.id];
+    
+    card.className = 'item-card' + (cart[i.id] > 0 ? ' selected' : '');
+    if (i.requireDinner && !hasDinner()) {
+      card.classList.add('locked');
+    }
+  });
+
+  // Lista de Combo (Derecha)
+  const selected = items.filter(i => cart[i.id] > 0);
+  const list = document.getElementById('comboList');
+  document.getElementById('emptyState').style.display = selected.length ? 'none' : 'block';
+  document.getElementById('comboFooter').style.display = selected.length ? 'block' : 'none';
+  
+  list.innerHTML = selected.map(i => `
+    <li class="combo-item">
+      <span>${i.name} ${cart[i.id] > 1 ? 'x'+cart[i.id] : ''}</span>
+      <span class="item-price">$${i.price * cart[i.id]}</span>
+    </li>
+  `).join('');
+
+  document.getElementById('comboTotal').textContent = `$${total} USD`;
+  document.getElementById('comboTotal').className = 'combo-total-price' + (isOver ? ' over' : '');
+  
+  const rem = BUDGET - total;
+  const remEl = document.getElementById('remaining');
+  remEl.textContent = rem >= 0 ? `Restan $${rem} USD` : `Exceso de $${Math.abs(rem)} USD`;
+  remEl.style.color = rem >= 0 ? '#4caf50' : '#e74c3c';
+}
+
+function clearAll() {
+  items.forEach(i => cart[i.id] = 0);
+  render();
+}
+
+let savedCount = 0;
+function saveCombo() {
+  const total = items.reduce((sum, i) => sum + (i.price * cart[i.id]), 0);
+  if (total === 0) return;
+  savedCount++;
+  const section = document.getElementById('savedSection');
+  const list = document.getElementById('savedList');
+  section.style.display = 'block';
+  
+  const div = document.createElement('div');
+  div.style.background = 'var(--dark2)';
+  div.style.padding = '15px';
+  div.style.marginBottom = '10px';
+  div.style.borderRadius = '4px';
+  div.style.fontSize = '0.8rem';
+  div.innerHTML = `<strong>Combo #${savedCount}</strong> - $${total} USD<br>` + 
+    items.filter(i => cart[i.id] > 0).map(i => i.name).join(' · ');
+  list.prepend(div);
+}
+
+render();
+</script>
+</body>
+</html>

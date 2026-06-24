@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Room Upgrades — Dreams Riviera Cancún</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Jost:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --gold: #B8965A;
+    --gold-light: #D4AF6E;
+    --gold-pale: #F0E4CC;
+    --ink: #1A1A1A;
+    --gray: #6B6B6B;
+    --rule: #C8A96020;
+    --bg: #FDFBF7;
+  }
+
+  @page {
+    size: letter;
+    margin: 0;
+  }
+
+  body {
+    font-family: 'Jost', sans-serif;
+    background: var(--bg);
+    width: 8.5in;
+    height: 11in;
+    overflow: hidden;
+    color: var(--ink);
+  }
+
+  .page {
+    width: 8.5in;
+    height: 11in;
+    padding: 0.42in 0.48in 0.36in;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    background: var(--bg);
+  }
+
+  /* Corner ornaments */
+  .corner {
+    position: absolute;
+    width: 36px;
+    height: 36px;
+  }
+  .corner svg { width: 100%; height: 100%; }
+  .corner.tl { top: 18px; left: 18px; }
+  .corner.tr { top: 18px; right: 18px; transform: scaleX(-1); }
+  .corner.bl { bottom: 18px; left: 18px; transform: scaleY(-1); }
+  .corner.br { bottom: 18px; right: 18px; transform: scale(-1); }
+
+  /* HEADER */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-bottom: 0.5px solid var(--gold);
+    padding-bottom: 10px;
+    margin-bottom: 12px;
+  }
+
+  .brand-block { display: flex; flex-direction: column; gap: 1px; }
+
+  .property {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 400;
+    letter-spacing: 0.08em;
+    color: var(--ink);
+    line-height: 1;
+  }
+
+  .property span {
+    font-style: italic;
+    font-weight: 300;
+  }
+
+  .sub-property {
+    font-size: 7.5px;
+    font-weight: 300;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--gray);
+    margin-top: 3px;
+  }
+
+  .doc-label {
+    text-align: right;
+  }
+
+  .doc-label .title-en {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    font-style: italic;
+    font-weight: 300;
+    color: var(--gold);
+    display: block;
+    line-height: 1;
+  }
+
+  .doc-label .title-es {
+    font-size: 7px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--gray);
+    display: block;
+    margin-top: 3px;
+  }
+
+  /* INTRO */
+  .intro {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+
+  .intro-text {
+    font-size: 8px;
+    font-weight: 300;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--gray);
+    line-height: 1.7;
+  }
+
+  .intro-note {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 11px;
+    font-style: italic;
+    color: var(--gold);
+    text-align: right;
+    line-height: 1.5;
+  }
+
+  /* GOLD RULE DIVIDER */
+  .gold-rule {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .gold-rule::before, .gold-rule::after {
+    content: '';
+    flex: 1;
+    height: 0.5px;
+    background: linear-gradient(to right, transparent, var(--gold), transparent);
+  }
+  .gold-rule-diamond {
+    width: 5px; height: 5px;
+    background: var(--gold);
+    transform: rotate(45deg);
+    flex-shrink: 0;
+  }
+
+  /* SECTION LABEL */
+  .section-label {
+    font-size: 7px;
+    font-weight: 400;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 9px;
+    text-align: center;
+  }
+
+  /* PRICING TABLE */
+  .price-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 14px;
+  }
+
+  /* Column headers (room categories) */
+  .price-table thead tr.col-headers th {
+    font-size: 7px;
+    font-weight: 400;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--gold);
+    padding: 0 4px 8px;
+    text-align: center;
+    vertical-align: bottom;
+    white-space: nowrap;
+  }
+
+  .price-table thead tr.col-headers th.row-header {
+    text-align: left;
+    font-size: 6.5px;
+    letter-spacing: 0.2em;
+    color: var(--gray);
+    padding-left: 0;
+  }
+
+  /* Room name cells */
+  .price-table thead tr.room-names th {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    color: var(--ink);
+    padding: 0 6px 2px;
+    text-align: center;
+    vertical-align: bottom;
+    white-space: nowrap;
+  }
+
+  /* Suite names get bigger treatment */
+  .price-table thead tr.room-names th.col-hnk,
+  .price-table thead tr.room-names th.col-msk,
+  .price-table thead tr.room-names th.col-gvk,
+  .price-table thead tr.room-names th.col-psk {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: 0.02em;
+  }
+
+  /* Uniform column widths so "Ocean Front" never wraps */
+  .price-table th.col-hnk,
+  .price-table th.col-msk,
+  .price-table th.col-gvk,
+  .price-table th.col-psk,
+  .price-table td.col-hnk,
+  .price-table td.col-msk,
+  .price-table td.col-gvk,
+  .price-table td.col-psk {
+    width: 11%;
+    white-space: nowrap;
+  }
+
+  /* Also fix the Preferred Club columns to a consistent width */
+  .price-table colgroup .col-pc { width: 9%; }
+
+  .price-table thead tr.room-names th.row-header {
+    text-align: left;
+    font-family: 'Jost', sans-serif;
+    font-size: 8px;
+    font-weight: 300;
+    color: var(--gray);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding-left: 0;
+  }
+
+  /* Sub-label under room names */
+  .price-table thead tr.room-subs th {
+    font-family: 'Jost', sans-serif;
+    font-size: 6.5px;
+    font-weight: 300;
+    color: var(--gray);
+    letter-spacing: 0.12em;
+    padding: 1px 6px 8px;
+    text-align: center;
+    border-bottom: 0.5px solid var(--gold);
+    white-space: nowrap;
+  }
+
+  .price-table thead tr.room-subs th.row-header {
+    text-align: left;
+    padding-left: 0;
+    border-bottom: 0.5px solid var(--gold);
+  }
+
+  /* Body rows */
+  .price-table tbody tr {
+    border-bottom: 0.5px solid #C8A96022;
+  }
+
+  .price-table tbody tr:last-child {
+    border-bottom: 0.5px solid var(--gold);
+  }
+
+  .price-table tbody tr.suite-row {
+    background: linear-gradient(to right, #F8F0E222, transparent);
+  }
+
+  .price-table tbody td {
+    padding: 9px 6px;
+    text-align: center;
+    font-size: 12px;
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 500;
+    color: var(--ink);
+    letter-spacing: 0.01em;
+  }
+
+  .price-table tbody td.origin-room {
+    text-align: left;
+    padding-left: 0;
+  }
+
+  .origin-room-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--ink);
+    display: block;
+    letter-spacing: 0.03em;
+  }
+
+  .origin-room-code {
+    font-family: 'Jost', sans-serif;
+    font-size: 6.5px;
+    font-weight: 300;
+    color: var(--gray);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    display: block;
+    margin-top: 1px;
+  }
+
+  .price-tag {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--ink);
+    letter-spacing: 0.01em;
+  }
+
+  .price-zero {
+    font-family: 'IBM Plex Sans', sans-serif;
+    color: var(--gray);
+    font-size: 11px;
+    font-weight: 300;
+    letter-spacing: 0.05em;
+  }
+
+  /* Suite upgrade cells get gold tint */
+  td.suite-cell {
+    color: var(--gold);
+  }
+
+  td.suite-cell .price-tag {
+    color: var(--gold);
+  }
+
+  /* Highlight column for suites */
+  .price-table tbody td.col-hnk { background: #FAF5EE44; }
+  .price-table tbody td.col-msk { background: #FAF5EE66; }
+  .price-table tbody td.col-gvk { background: #FAF5EE88; }
+  .price-table tbody td.col-psk { background: #F8EFE0BB; }
+
+  .price-table thead tr.room-subs th.col-psk { background: #F8EFE0BB; }
+  .price-table thead tr.room-subs th.col-gvk { background: #FAF5EE88; }
+  .price-table thead tr.room-subs th.col-msk { background: #FAF5EE66; }
+  .price-table thead tr.room-subs th.col-hnk { background: #FAF5EE44; }
+
+  /* FOOTER */
+  .footer {
+    margin-top: auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-top: 0.5px solid #C8A96040;
+    padding-top: 8px;
+  }
+
+  .footer-note {
+    font-size: 7px;
+    font-weight: 300;
+    letter-spacing: 0.14em;
+    color: var(--gray);
+    line-height: 1.8;
+  }
+
+  .footer-note strong {
+    font-weight: 400;
+    color: var(--ink);
+    letter-spacing: 0.08em;
+  }
+
+  .footer-brand {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 9px;
+    font-weight: 300;
+    font-style: italic;
+    color: var(--gold);
+    letter-spacing: 0.08em;
+    text-align: right;
+  }
+
+  /* "FROM" label above prices */
+  .from-label {
+    display: block;
+    font-family: 'Jost', sans-serif;
+    font-size: 5.5px;
+    font-weight: 300;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gray);
+    margin-bottom: 2px;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Corner ornaments -->
+  <div class="corner tl">
+    <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M4 32 L4 4 L32 4" stroke="#B8965A" stroke-width="0.6" fill="none"/>
+      <path d="M4 4 L10 10" stroke="#B8965A" stroke-width="0.5" opacity="0.5"/>
+      <circle cx="4" cy="4" r="1.5" fill="#B8965A"/>
+    </svg>
+  </div>
+  <div class="corner tr">
+    <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M4 32 L4 4 L32 4" stroke="#B8965A" stroke-width="0.6" fill="none"/>
+      <path d="M4 4 L10 10" stroke="#B8965A" stroke-width="0.5" opacity="0.5"/>
+      <circle cx="4" cy="4" r="1.5" fill="#B8965A"/>
+    </svg>
+  </div>
+  <div class="corner bl">
+    <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M4 32 L4 4 L32 4" stroke="#B8965A" stroke-width="0.6" fill="none"/>
+      <path d="M4 4 L10 10" stroke="#B8965A" stroke-width="0.5" opacity="0.5"/>
+      <circle cx="4" cy="4" r="1.5" fill="#B8965A"/>
+    </svg>
+  </div>
+  <div class="corner br">
+    <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M4 32 L4 4 L32 4" stroke="#B8965A" stroke-width="0.6" fill="none"/>
+      <path d="M4 4 L10 10" stroke="#B8965A" stroke-width="0.5" opacity="0.5"/>
+      <circle cx="4" cy="4" r="1.5" fill="#B8965A"/>
+    </svg>
+  </div>
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="brand-block">
+      <div class="property">Dreams<span> Riviera Cancún</span></div>
+      <div class="sub-property">Resort &amp; Spa · Preferred Club</div>
+    </div>
+    <div class="doc-label">
+      <span class="title-en">Room Upgrade Options</span>
+      <span class="title-es">Mejoras de habitación · Precios en USD por noche</span>
+    </div>
+  </div>
+
+  <!-- INTRO -->
+  <div class="intro">
+    <div class="intro-text">
+      Prices shown reflect the additional investment per night to enjoy your upgraded room.<br>
+      Subject to availability at time of check-in.
+    </div>
+    <div class="intro-note">
+      Upgrade from your current room<br>to any of the categories below.
+    </div>
+  </div>
+
+  <!-- RULE -->
+  <div class="gold-rule"><div class="gold-rule-diamond"></div></div>
+
+  <div class="section-label">Preferred Club · Suites &amp; Ocean Front Experiences</div>
+
+  <!-- PRICING TABLE -->
+  <!-- Only showing PCOJ forward as suggested, with full suite columns -->
+  <table class="price-table">
+    <colgroup>
+      <col style="width: 22%"><!-- origin room label -->
+      <col style="width: 8%"> <!-- PCOJ -->
+      <col style="width: 9%"> <!-- PCOF -->
+      <col style="width: 9%"> <!-- PCPJ -->
+      <col style="width: 11%"><!-- HNKOF -->
+      <col style="width: 11%"><!-- MSKOF -->
+      <col style="width: 11%"><!-- GVKOF -->
+      <col style="width: 11%"><!-- PSKOF -->
+    </colgroup>
+    <thead>
+      <tr class="col-headers">
+        <th class="row-header">Upgrading from</th>
+        <th>Preferred Club</th>
+        <th>Preferred Club</th>
+        <th>Preferred Club</th>
+        <th class="col-hnk">Ocean Front</th>
+        <th class="col-msk">Ocean Front</th>
+        <th class="col-gvk">Ocean Front</th>
+        <th class="col-psk">Ocean Front</th>
+      </tr>
+      <tr class="room-names">
+        <th class="row-header">Current room type</th>
+        <th>Ocean View</th>
+        <th>Ocean View<br>Pool Front</th>
+        <th>Plunge Pool</th>
+        <th class="col-hnk">Honeymoon</th>
+        <th class="col-msk">Master</th>
+        <th class="col-gvk">Governor</th>
+        <th class="col-psk">Presidential</th>
+      </tr>
+      <tr class="room-subs">
+        <th class="row-header"></th>
+        <th>PCOJ</th>
+        <th>PCOF</th>
+        <th>PCPJ / PCLP</th>
+        <th class="col-hnk">HNKOF</th>
+        <th class="col-msk">MSKOF</th>
+        <th class="col-gvk">GVKOF</th>
+        <th class="col-psk">PSKOF</th>
+      </tr>
+    </thead>
+    <tbody>
+
+      <!-- DXTV -->
+      <tr>
+        <td class="origin-room">
+          <span class="origin-room-name">Deluxe Premium Tropical</span>
+          <span class="origin-room-code">DXTV</span>
+        </td>
+        <td><span class="from-label">from</span><span class="price-tag">$170</span></td>
+        <td><span class="from-label">from</span><span class="price-tag">$200</span></td>
+        <td><span class="from-label">from</span><span class="price-tag">$290</span></td>
+        <td class="col-hnk suite-cell"><span class="from-label">from</span><span class="price-tag">$370</span></td>
+        <td class="col-msk suite-cell"><span class="from-label">from</span><span class="price-tag">$600</span></td>
+        <td class="col-gvk suite-cell"><span class="from-label">from</span><span class="price-tag">$1,000</span></td>
+        <td class="col-psk suite-cell"><span class="from-label">from</span><span class="price-tag">$1,470</span></td>
+      </tr>
+
+      <!-- DXOV -->
+      <tr>
+        <td class="origin-room">
+          <span class="origin-room-name">Deluxe Premium Ocean View</span>
+          <span class="origin-room-code">DXOV</span>
+        </td>
+        <td><span class="from-label">from</span><span class="price-tag">$100</span></td>
+        <td><span class="from-label">from</span><span class="price-tag">$130</span></td>
+        <td><span class="from-label">from</span><span class="price-tag">$220</span></td>
+        <td class="col-hnk suite-cell"><span class="from-label">from</span><span class="price-tag">$300</span></td>
+        <td class="col-msk suite-cell"><span class="from-label">from</span><span class="price-tag">$530</span></td>
+        <td class="col-gvk suite-cell"><span class="from-label">from</span><span class="price-tag">$930</span></td>
+        <td class="col-psk suite-cell"><span class="from-label">from</span><span class="price-tag">$1,400</span></td>
+      </tr>
+
+      <!-- DXPP -->
+      <tr>
+        <td class="origin-room">
+          <span class="origin-room-name">Deluxe Premium Plunge Pool</span>
+          <span class="origin-room-code">DXPP</span>
+        </td>
+        <td><span class="from-label">from</span><span class="price-tag">$70</span></td>
+        <td><span class="from-label">from</span><span class="price-tag">$60</span></td>
+        <td><span class="from-label">from</span><span class="price-tag">$150</span></td>
+        <td class="col-hnk suite-cell"><span class="from-label">from</span><span class="price-tag">$230</span></td>
+        <td class="col-msk suite-cell"><span class="from-label">from</span><span class="price-tag">$460</span></td>
+        <td class="col-gvk suite-cell"><span class="from-label">from</span><span class="price-tag">$860</span></td>
+        <td class="col-psk suite-cell"><span class="from-label">from</span><span class="price-tag">$1,330</span></td>
+      </tr>
+
+      <!-- PCOJ -->
+      <tr>
+        <td class="origin-room">
+          <span class="origin-room-name">Preferred Club Ocean View</span>
+          <span class="origin-room-code">PCOJ</span>
+        </td>
+        <td><span class="price-zero">—</span></td>
+        <td><span class="from-label">from</span><span class="price-tag">$30</span></td>
+        <td><span class="from-label">from</span><span class="price-tag">$120</span></td>
+        <td class="col-hnk suite-cell"><span class="from-label">from</span><span class="price-tag">$200</span></td>
+        <td class="col-msk suite-cell"><span class="from-label">from</span><span class="price-tag">$430</span></td>
+        <td class="col-gvk suite-cell"><span class="from-label">from</span><span class="price-tag">$830</span></td>
+        <td class="col-psk suite-cell"><span class="from-label">from</span><span class="price-tag">$1,300</span></td>
+      </tr>
+
+      <!-- PCOF -->
+      <tr>
+        <td class="origin-room">
+          <span class="origin-room-name">Preferred Club Ocean View Pool Front</span>
+          <span class="origin-room-code">PCOF</span>
+        </td>
+        <td><span class="price-zero">—</span></td>
+        <td><span class="price-zero">—</span></td>
+        <td><span class="from-label">from</span><span class="price-tag">$90</span></td>
+        <td class="col-hnk suite-cell"><span class="from-label">from</span><span class="price-tag">$170</span></td>
+        <td class="col-msk suite-cell"><span class="from-label">from</span><span class="price-tag">$400</span></td>
+        <td class="col-gvk suite-cell"><span class="from-label">from</span><span class="price-tag">$800</span></td>
+        <td class="col-psk suite-cell"><span class="from-label">from</span><span class="price-tag">$1,270</span></td>
+      </tr>
+
+      <!-- PCPJ -->
+      <tr>
+        <td class="origin-room">
+          <span class="origin-room-name">Preferred Club Plunge Pool</span>
+          <span class="origin-room-code">PCPJ / PCLP</span>
+        </td>
+        <td><span class="price-zero">—</span></td>
+        <td><span class="price-zero">—</span></td>
+        <td><span class="price-zero">—</span></td>
+        <td class="col-hnk suite-cell"><span class="from-label">from</span><span class="price-tag">$80</span></td>
+        <td class="col-msk suite-cell"><span class="from-label">from</span><span class="price-tag">$310</span></td>
+        <td class="col-gvk suite-cell"><span class="from-label">from</span><span class="price-tag">$710</span></td>
+        <td class="col-psk suite-cell"><span class="from-label">from</span><span class="price-tag">$1,180</span></td>
+      </tr>
+
+      <!-- HNKOF -->
+      <tr class="suite-row">
+        <td class="origin-room">
+          <span class="origin-room-name">Honeymoon Suite Ocean Front</span>
+          <span class="origin-room-code">HNKOF</span>
+        </td>
+        <td><span class="price-zero">—</span></td>
+        <td><span class="price-zero">—</span></td>
+        <td><span class="price-zero">—</span></td>
+        <td class="col-hnk"><span class="price-zero">—</span></td>
+        <td class="col-msk suite-cell"><span class="from-label">from</span><span class="price-tag">$230</span></td>
+        <td class="col-gvk suite-cell"><span class="from-label">from</span><span class="price-tag">$630</span></td>
+        <td class="col-psk suite-cell"><span class="from-label">from</span><span class="price-tag">$1,100</span></td>
+      </tr>
+
+      <!-- MSKOF -->
+      <tr class="suite-row">
+        <td class="origin-room">
+          <span class="origin-room-name">Master Suite Ocean Front</span>
+          <span class="origin-room-code">MSKOF</span>
+        </td>
+        <td><span class="price-zero">—</span></td>
+        <td><span class="price-zero">—</span></td>
+        <td><span class="price-zero">—</span></td>
+        <td class="col-hnk"><span class="price-zero">—</span></td>
+        <td class="col-msk"><span class="price-zero">—</span></td>
+        <td class="col-gvk suite-cell"><span class="from-label">from</span><span class="price-tag">$400</span></td>
+        <td class="col-psk suite-cell"><span class="from-label">from</span><span class="price-tag">$870</span></td>
+      </tr>
+
+      <!-- GVKOF -->
+      <tr class="suite-row">
+        <td class="origin-room">
+          <span class="origin-room-name">Governor Suite Ocean Front</span>
+          <span class="origin-room-code">GVKOF</span>
+        </td>
+        <td><span class="price-zero">—</span></td>
+        <td><span class="price-zero">—</span></td>
+        <td><span class="price-zero">—</span></td>
+        <td class="col-hnk"><span class="price-zero">—</span></td>
+        <td class="col-msk"><span class="price-zero">—</span></td>
+        <td class="col-gvk"><span class="price-zero">—</span></td>
+        <td class="col-psk suite-cell"><span class="from-label">from</span><span class="price-tag">$470</span></td>
+      </tr>
+
+    </tbody>
+  </table>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div class="footer-note">
+      <strong>Rates are per night · USD · Subject to availability</strong><br>
+      Upgrade is confirmed upon availability at time of check-in. Prices are set as a starting point and may vary.<br>
+      For reservations or inquiries, please speak with your Front Desk Agent or Preferred Club Concierge.
+    </div>
+    <div class="footer-brand">
+      Dreams® Riviera Cancún<br>
+      <span style="font-size:7px; font-family:'Jost',sans-serif; font-style:normal; font-weight:300; letter-spacing:0.15em; color:#B8965A88;">RESORT &amp; SPA</span>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

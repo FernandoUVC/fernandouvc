@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>World of Hyatt — Calculadora de Oportunidad</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #C9A84C;
+    --gold-light: #E8D08A;
+    --gold-dim: rgba(201, 168, 76, 0.15);
+    --dark: #0A0A0A;
+    --dark-2: #111111;
+    --dark-3: #1A1A1A;
+    --dark-4: #242424;
+    --text: #E8E0D0;
+    --text-dim: #8A8070;
+    --text-muted: #4A4440;
+    --red: #C0392B;
+    --red-dim: rgba(192, 57, 43, 0.12);
+    --green: #2ECC71;
+    --green-dim: rgba(46, 204, 113, 0.1);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--dark);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-weight: 300;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background texture */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(201,168,76,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 40% at 90% 80%, rgba(201,168,76,0.04) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 60px 32px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 70px;
+    opacity: 0;
+    animation: fadeUp 0.8s ease forwards;
+  }
+
+  .header-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  .header h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(36px, 6vw, 58px);
+    font-weight: 300;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    color: var(--text);
+    margin-bottom: 16px;
+  }
+
+  .header h1 em {
+    font-style: italic;
+    color: var(--gold-light);
+  }
+
+  .header-sub {
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.05em;
+    line-height: 1.8;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  .divider {
+    width: 1px;
+    height: 40px;
+    background: linear-gradient(to bottom, transparent, var(--gold), transparent);
+    margin: 32px auto;
+  }
+
+  /* Input Section */
+  .section {
+    background: var(--dark-2);
+    border: 1px solid var(--dark-4);
+    border-radius: 2px;
+    padding: 40px;
+    margin-bottom: 24px;
+    opacity: 0;
+    animation: fadeUp 0.8s ease forwards;
+  }
+
+  .section:nth-child(2) { animation-delay: 0.1s; }
+  .section:nth-child(3) { animation-delay: 0.2s; }
+
+  .section-label {
+    font-size: 9px;
+    letter-spacing: 0.35em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 32px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--dark-4);
+  }
+
+  .inputs-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+
+  @media (max-width: 600px) {
+    .inputs-grid { grid-template-columns: 1fr; }
+    .section { padding: 28px 20px; }
+    .container { padding: 40px 16px; }
+  }
+
+  .input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .input-group label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+  }
+
+  .input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .input-prefix {
+    position: absolute;
+    left: 14px;
+    font-size: 13px;
+    color: var(--gold);
+    pointer-events: none;
+  }
+
+  .input-suffix {
+    position: absolute;
+    right: 14px;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    pointer-events: none;
+  }
+
+  input[type="number"] {
+    width: 100%;
+    background: var(--dark-3);
+    border: 1px solid var(--dark-4);
+    border-radius: 2px;
+    padding: 14px 48px 14px 32px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 16px;
+    font-weight: 400;
+    outline: none;
+    transition: border-color 0.2s, background 0.2s;
+    -moz-appearance: textfield;
+  }
+
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+  input[type="number"]:focus {
+    border-color: var(--gold);
+    background: #131310;
+  }
+
+  input[type="number"]::placeholder { color: var(--text-muted); }
+
+  /* Slider */
+  .slider-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .slider-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .slider-label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+  }
+
+  .slider-value {
+    font-size: 22px;
+    font-family: 'Cormorant Garamond', serif;
+    color: var(--gold-light);
+    font-weight: 300;
+    line-height: 1;
+  }
+
+  .slider-value span {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+    margin-left: 4px;
+  }
+
+  input[type="range"] {
+    width: 100%;
+    height: 2px;
+    background: var(--dark-4);
+    outline: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+    border-radius: 0;
+    margin-top: 6px;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    background: var(--gold);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.15s;
+  }
+
+  input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.3); }
+
+  input[type="range"]::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    background: var(--gold);
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+  }
+
+  /* Season toggle */
+  .toggle-group {
+    display: flex;
+    gap: 0;
+    border: 1px solid var(--dark-4);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .toggle-btn {
+    flex: 1;
+    padding: 12px 8px;
+    background: var(--dark-3);
+    border: none;
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-right: 1px solid var(--dark-4);
+  }
+
+  .toggle-btn:last-child { border-right: none; }
+
+  .toggle-btn.active {
+    background: var(--gold-dim);
+    color: var(--gold);
+  }
+
+  /* Calculate button */
+  .btn-calculate {
+    width: 100%;
+    padding: 18px;
+    background: var(--gold);
+    border: none;
+    border-radius: 2px;
+    color: var(--dark);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 8px;
+    font-weight: 400;
+  }
+
+  .btn-calculate:hover {
+    background: var(--gold-light);
+    letter-spacing: 0.4em;
+  }
+
+  .btn-calculate:active { transform: scale(0.99); }
+
+  /* Results */
+  #results {
+    display: none;
+  }
+
+  #results.visible {
+    display: block;
+    animation: fadeUp 0.6s ease forwards;
+  }
+
+  .loss-banner {
+    background: var(--red-dim);
+    border: 1px solid rgba(192, 57, 43, 0.3);
+    border-radius: 2px;
+    padding: 32px 40px;
+    margin-bottom: 24px;
+    text-align: center;
+  }
+
+  .loss-banner-label {
+    font-size: 9px;
+    letter-spacing: 0.35em;
+    color: var(--red);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    opacity: 0.8;
+  }
+
+  .loss-number {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(52px, 10vw, 88px);
+    font-weight: 300;
+    color: #E8594A;
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+
+  .loss-subtitle {
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 0.15em;
+    margin-top: 12px;
+  }
+
+  .loss-subtitle strong {
+    color: var(--text);
+    font-weight: 400;
+  }
+
+  /* Scenario tabs */
+  .scenario-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 1px;
+  }
+
+  .scenario-tab {
+    flex: 1;
+    padding: 14px;
+    background: var(--dark-3);
+    border: 1px solid var(--dark-4);
+    border-bottom: none;
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+
+  .scenario-tab.active {
+    background: var(--dark-2);
+    color: var(--gold);
+    border-color: var(--dark-4);
+    border-bottom-color: var(--dark-2);
+    z-index: 1;
+  }
+
+  .scenario-tab:hover:not(.active) { color: var(--text-dim); }
+
+  /* Scenario panel */
+  .scenario-panel {
+    display: none;
+    background: var(--dark-2);
+    border: 1px solid var(--dark-4);
+    padding: 36px 40px;
+    margin-bottom: 24px;
+  }
+
+  .scenario-panel.active { display: block; }
+
+  .scenario-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--dark-4);
+    margin-bottom: 32px;
+    border: 1px solid var(--dark-4);
+  }
+
+  .summary-cell {
+    background: var(--dark-3);
+    padding: 20px;
+    text-align: center;
+  }
+
+  .summary-cell-label {
+    font-size: 8px;
+    letter-spacing: 0.25em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .summary-cell-value {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px;
+    font-weight: 300;
+    color: var(--gold-light);
+    line-height: 1;
+  }
+
+  .summary-cell-unit {
+    font-size: 9px;
+    color: var(--text-muted);
+    margin-top: 4px;
+    letter-spacing: 0.1em;
+  }
+
+  /* Hotels list */
+  .hotels-title {
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--dark-4);
+  }
+
+  .hotel-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--dark-3);
+    gap: 16px;
+    animation: fadeUp 0.4s ease forwards;
+    opacity: 0;
+  }
+
+  .hotel-item:last-child { border-bottom: none; }
+
+  .hotel-left { flex: 1; min-width: 0; }
+
+  .hotel-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    font-weight: 400;
+    color: var(--text);
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .hotel-location {
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+  }
+
+  .hotel-right {
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .hotel-nights {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 26px;
+    font-weight: 300;
+    color: var(--green);
+    line-height: 1;
+  }
+
+  .hotel-nights-label {
+    font-size: 9px;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+  }
+
+  .hotel-cat {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background: var(--gold);
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+
+  .cat-badge {
+    font-size: 8px;
+    letter-spacing: 0.15em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+
+  .no-hotels {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-muted);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+  }
+
+  /* Season filter */
+  .season-filter {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .season-chip {
+    padding: 6px 16px;
+    background: var(--dark-3);
+    border: 1px solid var(--dark-4);
+    border-radius: 20px;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .season-chip.active {
+    background: var(--gold-dim);
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+
+  /* Projection chart */
+  .projection-section {
+    margin-top: 32px;
+    padding-top: 32px;
+    border-top: 1px solid var(--dark-4);
+  }
+
+  .projection-label {
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+
+  .projection-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .proj-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .proj-bar-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    width: 80px;
+    flex-shrink: 0;
+    letter-spacing: 0.05em;
+  }
+
+  .proj-bar-track {
+    flex: 1;
+    height: 3px;
+    background: var(--dark-4);
+    border-radius: 0;
+    overflow: hidden;
+  }
+
+  .proj-bar-fill {
+    height: 100%;
+    background: linear-gradient(to right, var(--gold-dim), var(--gold));
+    border-radius: 0;
+    transition: width 1s ease;
+    width: 0;
+  }
+
+  .proj-bar-value {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    color: var(--gold-light);
+    width: 120px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  /* Footer note */
+  .footer-note {
+    text-align: center;
+    padding: 40px 0 20px;
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    line-height: 2;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.4s forwards;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Scroll animation for hotel items */
+  .hotel-item:nth-child(1) { animation-delay: 0.05s; }
+  .hotel-item:nth-child(2) { animation-delay: 0.1s; }
+  .hotel-item:nth-child(3) { animation-delay: 0.15s; }
+  .hotel-item:nth-child(4) { animation-delay: 0.2s; }
+  .hotel-item:nth-child(5) { animation-delay: 0.25s; }
+  .hotel-item:nth-child(6) { animation-delay: 0.3s; }
+  .hotel-item:nth-child(7) { animation-delay: 0.35s; }
+  .hotel-item:nth-child(8) { animation-delay: 0.4s; }
+
+  .highlight-pill {
+    display: inline-block;
+    background: var(--green-dim);
+    border: 1px solid rgba(46, 204, 113, 0.2);
+    color: var(--green);
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    padding: 3px 10px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-eyebrow">World of Hyatt · Calculadora de Oportunidad</div>
+    <h1>Lo que tus vacaciones<br>pudieron <em>valer</em></h1>
+    <div class="divider"></div>
+    <p class="header-sub">Cada dólar gastado en un hotel Hyatt genera puntos canjeables por estadías gratuitas. Esto es lo que tu dinero ya gastado hubiese producido.</p>
+  </div>
+
+  <!-- Inputs -->
+  <div class="section" style="animation-delay: 0.1s;">
+    <div class="section-label">01 — Tu viaje</div>
+    <div class="inputs-grid">
+      <div class="input-group">
+        <label>Gasto total en vacaciones</label>
+        <div class="input-wrapper">
+          <span class="input-prefix">$</span>
+          <input type="number" id="spend" placeholder="3000" min="100" step="100">
+          <span class="input-suffix">USD</span>
+        </div>
+      </div>
+      <div class="input-group">
+        <label>Noches por viaje</label>
+        <div class="input-wrapper">
+          <input type="number" id="nights" placeholder="5" min="1" max="30" style="padding-left: 14px;">
+          <span class="input-suffix">noches</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" style="animation-delay: 0.2s;">
+    <div class="section-label">02 — Proyección</div>
+    <div class="inputs-grid">
+      <div class="slider-group">
+        <div class="slider-header">
+          <span class="slider-label">Viajes por año</span>
+          <span class="slider-value" id="trips-display">2<span>viajes</span></span>
+        </div>
+        <input type="range" id="trips" min="1" max="6" value="2">
+      </div>
+      <div class="slider-group">
+        <div class="slider-header">
+          <span class="slider-label">Años a proyectar</span>
+          <span class="slider-value" id="years-display">3<span>años</span></span>
+        </div>
+        <input type="range" id="years" min="1" max="10" value="3">
+      </div>
+    </div>
+  </div>
+
+  <button class="btn-calculate" onclick="calculate()">
+    Calcular oportunidad perdida
+  </button>
+
+  <!-- Results -->
+  <div id="results">
+
+    <div style="height: 40px;"></div>
+
+    <div class="loss-banner">
+      <div class="loss-banner-label">Puntos que no acumulaste · este viaje</div>
+      <div class="loss-number" id="points-single">—</div>
+      <div class="loss-subtitle">puntos · equivale a <strong id="equiv-text">—</strong></div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="scenario-tabs">
+      <div class="scenario-tab active" onclick="showScenario('single', this)">Este viaje</div>
+      <div class="scenario-tab" onclick="showScenario('year', this)">Por año</div>
+      <div class="scenario-tab" onclick="showScenario('total', this)">Proyección total</div>
+    </div>
+
+    <!-- Scenario: Single -->
+    <div class="scenario-panel active" id="panel-single">
+      <div class="scenario-summary">
+        <div class="summary-cell">
+          <div class="summary-cell-label">Puntos generados</div>
+          <div class="summary-cell-value" id="s-points">—</div>
+          <div class="summary-cell-unit">puntos</div>
+        </div>
+        <div class="summary-cell">
+          <div class="summary-cell-label">Gasto considerado</div>
+          <div class="summary-cell-value" id="s-spend">—</div>
+          <div class="summary-cell-unit">USD</div>
+        </div>
+        <div class="summary-cell">
+          <div class="summary-cell-label">Noches alcanzables</div>
+          <div class="summary-cell-value" id="s-nights">—</div>
+          <div class="summary-cell-unit">en cat. 1–3</div>
+        </div>
+      </div>
+
+      <div class="season-filter">
+        <span class="season-chip active" onclick="filterSeason('all', this)">Todas las temporadas</span>
+        <span class="season-chip" onclick="filterSeason('low', this)">Temporada baja</span>
+        <span class="season-chip" onclick="filterSeason('mid', this)">Temporada media</span>
+        <span class="season-chip" onclick="filterSeason('high', this)">Temporada alta</span>
+      </div>
+
+      <div class="hotels-title">Destinos alcanzables con estos puntos</div>
+      <div id="hotels-single"></div>
+    </div>
+
+    <!-- Scenario: Year -->
+    <div class="scenario-panel" id="panel-year">
+      <div class="scenario-summary">
+        <div class="summary-cell">
+          <div class="summary-cell-label">Puntos anuales</div>
+          <div class="summary-cell-value" id="y-points">—</div>
+          <div class="summary-cell-unit">puntos</div>
+        </div>
+        <div class="summary-cell">
+          <div class="summary-cell-label">Gasto anual</div>
+          <div class="summary-cell-value" id="y-spend">—</div>
+          <div class="summary-cell-unit">USD</div>
+        </div>
+        <div class="summary-cell">
+          <div class="summary-cell-label">Viajes gratis equiv.</div>
+          <div class="summary-cell-value" id="y-free">—</div>
+          <div class="summary-cell-unit">viajes adicionales</div>
+        </div>
+      </div>
+      <div class="hotels-title">Destinos alcanzables con puntos anuales</div>
+      <div id="hotels-year"></div>
+    </div>
+
+    <!-- Scenario: Total -->
+    <div class="scenario-panel" id="panel-total">
+      <div class="scenario-summary">
+        <div class="summary-cell">
+          <div class="summary-cell-label">Puntos totales</div>
+          <div class="summary-cell-value" id="t-points">—</div>
+          <div class="summary-cell-unit">puntos</div>
+        </div>
+        <div class="summary-cell">
+          <div class="summary-cell-label">Inversión total</div>
+          <div class="summary-cell-value" id="t-spend">—</div>
+          <div class="summary-cell-unit">USD</div>
+        </div>
+        <div class="summary-cell">
+          <div class="summary-cell-label">Viajes premium equiv.</div>
+          <div class="summary-cell-value" id="t-free">—</div>
+          <div class="summary-cell-unit">viajes gratis</div>
+        </div>
+      </div>
+
+      <div class="projection-section">
+        <div class="projection-label">Acumulación año por año</div>
+        <div class="projection-bars" id="proj-bars"></div>
+      </div>
+
+      <div style="margin-top: 32px;">
+        <div class="hotels-title">Destinos alcanzables con proyección total</div>
+        <div id="hotels-total"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footer-note">
+    Tasa de acumulación: 5 pts/USD · Precios de canje según World of Hyatt (publicados)<br>
+    Los rangos de temporada son aproximados · Los puntos no expiran con actividad anual
+  </div>
+
+</div>
+
+<script>
+// ─── DATA ───────────────────────────────────────────────────────────────────
+
+const POINTS_PER_DOLLAR = 5;
+
+// Points needed per night by category (standard award)
+const CATEGORY_POINTS = {
+  1: 3500,
+  2: 8000,
+  3: 12000,
+  4: 15000,
+  5: 20000,
+  6: 25000,
+  7: 30000,
+  8: 40000
+};
+
+// Season multipliers
+const SEASON = {
+  low:  0.85,
+  mid:  1.00,
+  high: 1.20
+};
+
+// Hotel database (50 iconic Hyatt properties)
+const HOTELS = [
+  // Cat 1
+  { name: "Hyatt Place Cancún Ciudad", city: "Cancún", country: "México", cat: 1, type: "playa" },
+  { name: "Hyatt Place San José", city: "San José", country: "Costa Rica", cat: 1, type: "ciudad" },
+  { name: "Hyatt Place Lima", city: "Lima", country: "Perú", cat: 1, type: "ciudad" },
+  // Cat 2
+  { name: "Hyatt Regency Guadalajara", city: "Guadalajara", country: "México", cat: 2, type: "ciudad" },
+  { name: "Hyatt Place Bogotá", city: "Bogotá", country: "Colombia", cat: 2, type: "ciudad" },
+  { name: "Hyatt Place Buenos Aires", city: "Buenos Aires", country: "Argentina", cat: 2, type: "ciudad" },
+  { name: "Hyatt Regency Cartagena", city: "Cartagena", country: "Colombia", cat: 2, type: "playa" },
+  // Cat 3
+  { name: "Hyatt Ziva Puerto Vallarta", city: "Puerto Vallarta", country: "México", cat: 3, type: "playa" },
+  { name: "Hyatt Regency Mexico City", city: "Ciudad de México", country: "México", cat: 3, type: "ciudad" },
+  { name: "Grand Hyatt São Paulo", city: "São Paulo", country: "Brasil", cat: 3, type: "ciudad" },
+  { name: "Hyatt Regency Orlando", city: "Orlando", country: "Estados Unidos", cat: 3, type: "ciudad" },
+  { name: "Hyatt Regency Monterrey", city: "Monterrey", country: "México", cat: 3, type: "ciudad" },
+  // Cat 4
+  { name: "Grand Hyatt Atlanta", city: "Atlanta", country: "Estados Unidos", cat: 4, type: "ciudad" },
+  { name: "Hyatt Regency Chicago", city: "Chicago", country: "Estados Unidos", cat: 4, type: "ciudad" },
+  { name: "Hyatt Centric Waikiki", city: "Honolulu", country: "Estados Unidos", cat: 4, type: "playa" },
+  { name: "Grand Hyatt Washington", city: "Washington D.C.", country: "Estados Unidos", cat: 4, type: "ciudad" },
+  { name: "Hyatt Regency Amsterdam", city: "Ámsterdam", country: "Países Bajos", cat: 4, type: "ciudad" },
+  { name: "Hyatt Regency Barcelona", city: "Barcelona", country: "España", cat: 4, type: "ciudad" },
+  // Cat 5
+  { name: "Grand Hyatt New York", city: "Nueva York", country: "Estados Unidos", cat: 5, type: "ciudad" },
+  { name: "Hyatt Regency Paris Étoile", city: "París", country: "Francia", cat: 5, type: "ciudad" },
+  { name: "Grand Hyatt Tokyo", city: "Tokio", country: "Japón", cat: 5, type: "ciudad" },
+  { name: "Hyatt Regency London", city: "Londres", country: "Reino Unido", cat: 5, type: "ciudad" },
+  { name: "Grand Hyatt Dubai", city: "Dubái", country: "EAU", cat: 5, type: "ciudad" },
+  { name: "Park Hyatt Sydney", city: "Sídney", country: "Australia", cat: 5, type: "ciudad" },
+  // Cat 6
+  { name: "Park Hyatt Paris-Vendôme", city: "París", country: "Francia", cat: 6, type: "ciudad" },
+  { name: "Park Hyatt Milan", city: "Milán", country: "Italia", cat: 6, type: "ciudad" },
+  { name: "Park Hyatt Tokyo", city: "Tokio", country: "Japón", cat: 6, type: "ciudad" },
+  { name: "Grand Hyatt Bali", city: "Bali", country: "Indonesia", cat: 6, type: "playa" },
+  { name: "Hyatt Ziva Cancún", city: "Cancún", country: "México", cat: 6, type: "playa" },
+  { name: "Park Hyatt Chicago", city: "Chicago", country: "Estados Unidos", cat: 6, type: "ciudad" },
+  { name: "Park Hyatt Vienna", city: "Viena", country: "Austria", cat: 6, type: "ciudad" },
+  // Cat 7
+  { name: "Park Hyatt Maldives", city: "Hadahaa Atoll", country: "Maldivas", cat: 7, type: "playa" },
+  { name: "Park Hyatt Zurich", city: "Zúrich", country: "Suiza", cat: 7, type: "ciudad" },
+  { name: "Andaz Costa Rica Resort", city: "Guanacaste", country: "Costa Rica", cat: 7, type: "playa" },
+  { name: "Alila Ventana Big Sur", city: "Big Sur", country: "Estados Unidos", cat: 7, type: "naturaleza" },
+  // Cat 8
+  { name: "Park Hyatt St. Kitts", city: "St. Kitts", country: "Caribe", cat: 8, type: "playa" },
+  { name: "Alila Marea Beach Resort", city: "Encinitas, CA", country: "Estados Unidos", cat: 8, type: "playa" },
+  { name: "Ventana Big Sur — Suites", city: "Big Sur", country: "Estados Unidos", cat: 8, type: "naturaleza" },
+];
+
+// ─── STATE ──────────────────────────────────────────────────────────────────
+let currentPoints = 0;
+let currentNights = 5;
+let currentSeason = 'all';
+let currentScenario = 'single';
+
+// ─── SLIDER SYNC ────────────────────────────────────────────────────────────
+document.getElementById('trips').addEventListener('input', function() {
+  document.getElementById('trips-display').innerHTML = this.value + '<span>viajes</span>';
+});
+document.getElementById('years').addEventListener('input', function() {
+  document.getElementById('years-display').innerHTML = this.value + '<span>años</span>';
+});
+
+// ─── FORMAT ─────────────────────────────────────────────────────────────────
+function fmt(n) {
+  if (n >= 1000000) return (n/1000000).toFixed(1) + 'M';
+  if (n >= 1000) return Math.round(n/1000) + 'K';
+  return n.toLocaleString();
+}
+
+function fmtFull(n) {
+  return n.toLocaleString('es-MX');
+}
+
+function fmtUSD(n) {
+  if (n >= 1000) return '$' + (n/1000).toFixed(0) + 'K';
+  return '$' + n;
+}
+
+// ─── CALCULATE ──────────────────────────────────────────────────────────────
+function calculate() {
+  const spend = parseFloat(document.getElementById('spend').value) || 3000;
+  const nights = parseInt(document.getElementById('nights').value) || 5;
+  const trips = parseInt(document.getElementById('trips').value);
+  const years = parseInt(document.getElementById('years').value);
+
+  currentNights = nights;
+
+  const pSingle = Math.round(spend * POINTS_PER_DOLLAR);
+  const pYear   = pSingle * trips;
+  const pTotal  = pYear * years;
+
+  currentPoints = pSingle;
+
+  // Update loss banner
+  document.getElementById('points-single').textContent = fmtFull(pSingle);
+
+  // Quick equivalent for banner subtitle
+  const bestHotel = getBestEquiv(pSingle, nights);
+  document.getElementById('equiv-text').textContent = bestHotel;
+
+  // Panel: single
+  document.getElementById('s-points').textContent = fmt(pSingle);
+  document.getElementById('s-spend').textContent = fmt(spend);
+  document.getElementById('s-nights').textContent = Math.floor(pSingle / CATEGORY_POINTS[1]);
+  renderHotels('hotels-single', pSingle, nights);
+
+  // Panel: year
+  document.getElementById('y-points').textContent = fmt(pYear);
+  document.getElementById('y-spend').textContent = fmt(spend * trips);
+  document.getElementById('y-free').textContent = trips > 1 ? (trips - 1) : '1';
+  renderHotels('hotels-year', pYear, nights);
+
+  // Panel: total
+  document.getElementById('t-points').textContent = fmt(pTotal);
+  document.getElementById('t-spend').textContent = fmt(spend * trips * years);
+  const freeTotalNights = Math.floor(pTotal / CATEGORY_POINTS[3]);
+  document.getElementById('t-free').textContent = Math.floor(freeTotalNights / nights);
+  renderHotels('hotels-total', pTotal, nights);
+  renderProjectionBars(pSingle, trips, years);
+
+  // Show results
+  const results = document.getElementById('results');
+  results.classList.add('visible');
+  setTimeout(() => {
+    results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 100);
+}
+
+// ─── BEST EQUIV STRING ──────────────────────────────────────────────────────
+function getBestEquiv(points, nights) {
+  // Find the highest cat hotel where nights fit
+  let best = null;
+  for (let cat = 8; cat >= 1; cat--) {
+    const ptsNeeded = Math.round(CATEGORY_POINTS[cat] * SEASON.mid * nights);
+    if (points >= ptsNeeded) {
+      // Find a hotel of that cat
+      const h = HOTELS.find(h => h.cat === cat);
+      if (h) {
+        best = { nights, hotel: h.city + ', ' + h.country, cat };
+        break;
+      }
+    }
+  }
+  if (!best) {
+    // Partial - how many nights in cat 1?
+    const partialNights = Math.floor(points / CATEGORY_POINTS[1]);
+    if (partialNights > 0) return `${partialNights} noche${partialNights > 1 ? 's' : ''} en un Hyatt cat. 1`;
+    return 'puntos parciales acumulables';
+  }
+  return `${best.nights} noche${best.nights > 1 ? 's' : ''} en ${best.hotel}`;
+}
+
+// ─── RENDER HOTELS ──────────────────────────────────────────────────────────
+function renderHotels(containerId, points, nights) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+
+  const matchingSeason = currentSeason === 'all' ? ['low','mid','high'] : [currentSeason];
+
+  let results = [];
+
+  HOTELS.forEach(hotel => {
+    const ptsBase = CATEGORY_POINTS[hotel.cat];
+    const seasonsAvail = [];
+
+    if (currentSeason === 'all') {
+      ['low','mid','high'].forEach(s => {
+        const needed = Math.round(ptsBase * SEASON[s] * nights);
+        if (points >= needed) seasonsAvail.push(s);
+      });
+    } else {
+      const needed = Math.round(ptsBase * SEASON[currentSeason] * nights);
+      if (points >= needed) seasonsAvail.push(currentSeason);
+    }
+
+    if (seasonsAvail.length > 0) {
+      const bestSeason = seasonsAvail[seasonsAvail.length - 1]; // highest season they can afford
+      const ptsNeeded = Math.round(ptsBase * SEASON[bestSeason] * nights);
+      results.push({ hotel, seasonsAvail, ptsNeeded, nights });
+    }
+  });
+
+  // Sort by cat descending (show best options first)
+  results.sort((a, b) => b.hotel.cat - a.hotel.cat);
+
+  if (results.length === 0) {
+    container.innerHTML = '<div class="no-hotels">Con este presupuesto aún no alcanza para ' + nights + ' noches completas.<br><br><span style="font-size:11px;color:var(--text-muted)">Intenta reducir las noches o aumentar el gasto.</span></div>';
+    return;
+  }
+
+  // Show max 10
+  results.slice(0, 10).forEach((r, i) => {
+    const div = document.createElement('div');
+    div.className = 'hotel-item';
+    div.style.animationDelay = (i * 0.05) + 's';
+
+    const seasonLabels = { low: 'baja', mid: 'media', high: 'alta' };
+    const seasonStr = r.seasonsAvail.map(s => seasonLabels[s]).join(' · ');
+
+    const isHighSeason = r.seasonsAvail.includes('high');
+    const pill = isHighSeason ? '<span class="highlight-pill">Temporada alta</span>' : '';
+
+    div.innerHTML = `
+      <div class="hotel-left">
+        <div class="hotel-name">${r.hotel.name}${pill}</div>
+        <div class="hotel-location">
+          <span class="hotel-cat"></span>
+          <span class="cat-badge">Cat. ${r.hotel.cat} · ${r.hotel.city}, ${r.hotel.country} · Temp. ${seasonStr}</span>
+        </div>
+      </div>
+      <div class="hotel-right">
+        <div class="hotel-nights">${r.nights}</div>
+        <div class="hotel-nights-label">noches gratis</div>
+      </div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+// ─── PROJECTION BARS ────────────────────────────────────────────────────────
+function renderProjectionBars(pSingle, trips, years) {
+  const container = document.getElementById('proj-bars');
+  container.innerHTML = '';
+  const maxPts = pSingle * trips * years;
+
+  for (let y = 1; y <= years; y++) {
+    const pts = pSingle * trips * y;
+    const pct = (pts / maxPts) * 100;
+    const row = document.createElement('div');
+    row.className = 'proj-bar-row';
+    row.innerHTML = `
+      <div class="proj-bar-label">Año ${y}</div>
+      <div class="proj-bar-track">
+        <div class="proj-bar-fill" style="width:0%" data-target="${pct}"></div>
+      </div>
+      <div class="proj-bar-value">${fmt(pts)} pts</div>
+    `;
+    container.appendChild(row);
+  }
+
+  // Animate bars after render
+  setTimeout(() => {
+    container.querySelectorAll('.proj-bar-fill').forEach(bar => {
+      bar.style.width = bar.dataset.target + '%';
+    });
+  }, 100);
+}
+
+// ─── TABS ───────────────────────────────────────────────────────────────────
+function showScenario(id, el) {
+  currentScenario = id;
+  document.querySelectorAll('.scenario-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.scenario-panel').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('panel-' + id).classList.add('active');
+}
+
+// ─── SEASON FILTER ──────────────────────────────────────────────────────────
+function filterSeason(season, el) {
+  currentSeason = season;
+  document.querySelectorAll('.season-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+
+  const spend = parseFloat(document.getElementById('spend').value) || 3000;
+  const nights = parseInt(document.getElementById('nights').value) || 5;
+  const trips = parseInt(document.getElementById('trips').value);
+  const years = parseInt(document.getElementById('years').value);
+
+  const pSingle = Math.round(spend * POINTS_PER_DOLLAR);
+  const pYear   = pSingle * trips;
+  const pTotal  = pYear * years;
+
+  renderHotels('hotels-single', pSingle, nights);
+  renderHotels('hotels-year', pYear, nights);
+  renderHotels('hotels-total', pTotal, nights);
+}
+</script>
+</body>
+</html>

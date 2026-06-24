@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIP PDF Merger · Dreams Riviera Cancún</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=IBM+Plex+Mono:wght@300;400;500&display=swap');
+
+  :root {
+    --ink: #0f1923;
+    --gold: #b8935a;
+    --gold-light: #d4ae7e;
+    --paper: #f8f4ee;
+    --paper-dark: #ede8df;
+    --white: #ffffff;
+    --muted: #8c8070;
+    --success: #2e6b47;
+    --error: #8b2e2e;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--paper); color: var(--ink); font-family: 'IBM Plex Mono', monospace; min-height: 100vh; }
+
+  .topbar { background: var(--ink); padding: 14px 32px; display: flex; align-items: center; gap: 16px; }
+  .topbar-logo { font-family: 'Cormorant Garamond', serif; font-size: 1.25rem; color: var(--gold); letter-spacing: 0.04em; }
+  .topbar-sep { width: 1px; height: 20px; background: rgba(184,147,90,0.3); }
+  .topbar-sub { font-size: 10px; color: rgba(248,244,238,0.4); letter-spacing: 0.15em; text-transform: uppercase; }
+
+  .layout { display: grid; grid-template-columns: 300px 1fr; min-height: calc(100vh - 52px); }
+
+  /* SIDEBAR */
+  .sidebar { background: var(--ink); padding: 36px 24px; border-right: 1px solid rgba(184,147,90,0.15); display: flex; flex-direction: column; gap: 26px; }
+  .sidebar-title { font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; color: var(--white); line-height: 1.2; font-weight: 600; }
+  .sidebar-title em { color: var(--gold); font-style: normal; }
+  .sidebar-desc { font-size: 10px; color: rgba(248,244,238,0.38); line-height: 1.8; }
+
+  .step-block { border-left: 2px solid rgba(184,147,90,0.18); padding-left: 16px; transition: border-color 0.3s; }
+  .step-block.active { border-color: var(--gold); }
+  .step-block.done   { border-color: var(--success); }
+  .step-tag { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); margin-bottom: 4px; }
+  .step-tag .done-check { color: #5dba83; display: none; }
+  .step-block.done .done-check { display: inline; }
+  .step-block.done .step-num  { display: none; }
+  .step-name { font-family: 'Cormorant Garamond', serif; font-size: 1rem; color: var(--white); margin-bottom: 2px; }
+  .step-hint { font-size: 9.5px; color: rgba(248,244,238,0.26); line-height: 1.5; }
+
+  .sb-records-wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  .preview-label { font-size: 9px; letter-spacing: 0.15em; color: rgba(184,147,90,0.5); text-transform: uppercase; margin-bottom: 8px; }
+  .rec-count { font-size: 9px; color: var(--gold); letter-spacing: 0.1em; margin-bottom: 6px; }
+  .records-mini { flex: 1; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(184,147,90,0.3) transparent; }
+  .rec-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 9.5px; }
+  .rec-row:last-child { border-bottom: none; }
+  .rec-name { color: rgba(248,244,238,0.65); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 170px; }
+  .rec-room { color: var(--gold); font-size: 9px; white-space: nowrap; margin-left: 8px; }
+
+  /* MAIN */
+  .main { padding: 40px 44px; display: flex; flex-direction: column; gap: 24px; overflow-y: auto; }
+
+  .upload-card { background: var(--white); border: 1px solid var(--paper-dark); border-radius: 2px; overflow: hidden; }
+  .card-header { padding: 16px 22px; background: var(--paper-dark); display: flex; align-items: center; gap: 12px; border-bottom: 1px solid rgba(0,0,0,0.06); }
+  .card-num { width: 26px; height: 26px; background: var(--ink); color: var(--gold); font-size: 10px; display: flex; align-items: center; justify-content: center; border-radius: 1px; flex-shrink: 0; transition: all 0.3s; }
+  .card-num.done { background: var(--success); color: white; }
+  .card-title { font-family: 'Cormorant Garamond', serif; font-size: 1.05rem; color: var(--ink); font-weight: 600; }
+  .card-body { padding: 22px; }
+
+  .upload-zone { border: 1.5px dashed rgba(184,147,90,0.35); border-radius: 2px; padding: 28px 20px; text-align: center; cursor: pointer; transition: all 0.2s; position: relative; background: var(--paper); }
+  .upload-zone:hover, .upload-zone.drag-over { border-color: var(--gold); background: rgba(184,147,90,0.05); }
+  .upload-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .uz-icon { font-size: 26px; margin-bottom: 8px; color: var(--gold); opacity: 0.45; }
+  .uz-label { font-size: 11px; color: var(--muted); line-height: 1.6; }
+  .uz-label strong { color: var(--gold); font-weight: 500; }
+
+  .file-loaded { display: flex; align-items: center; gap: 12px; padding: 11px 15px; background: rgba(46,107,71,0.06); border: 1px solid rgba(46,107,71,0.2); border-radius: 2px; }
+  .fl-icon { color: #3d9b64; }
+  .fl-name { font-size: 11px; color: #2e6b47; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .fl-change { font-size: 10px; color: var(--muted); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; background: none; border: none; font-family: inherit; letter-spacing: 0.06em; }
+  .fl-change:hover { color: var(--gold); }
+
+  .alert { padding: 10px 14px; border-radius: 2px; font-size: 10.5px; line-height: 1.6; margin-top: 10px; }
+  .alert-error   { background: rgba(139,46,46,0.06);  border: 1px solid rgba(139,46,46,0.2);  color: #8b2e2e; }
+  .alert-info    { background: rgba(184,147,90,0.07); border: 1px solid rgba(184,147,90,0.22);color: #7a5e2e; }
+  .alert-success { background: rgba(46,107,71,0.06);  border: 1px solid rgba(46,107,71,0.2);  color: var(--success); }
+
+  /* TUNER */
+  .tuner-section { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--paper-dark); }
+  .tuner-title { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 14px; }
+
+  /* Section divider inside tuner */
+  .tuner-group-title {
+    font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--gold); margin: 16px 0 10px; display: flex; align-items: center; gap: 10px;
+  }
+  .tuner-group-title::after { content:''; flex:1; height:1px; background: rgba(184,147,90,0.2); }
+
+  .tuner-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .tuner-grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; }
+  .tuner-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .tuner-group > label { display: block; font-size: 9px; color: var(--muted); letter-spacing: 0.08em; margin-bottom: 6px; text-transform: uppercase; font-weight: 500; }
+  .tuner-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .tuner-field { display: flex; flex-direction: column; gap: 3px; }
+  .tuner-field span { font-size: 9px; color: rgba(140,128,112,0.5); }
+  .tuner-input { width: 100%; padding: 7px 10px; background: var(--paper); border: 1px solid var(--paper-dark); border-radius: 2px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--ink); transition: border-color 0.2s; }
+  .tuner-input:focus { outline: none; border-color: var(--gold); }
+
+  /* Offset joystick-style nudge buttons */
+  .offset-control {
+    display: flex; flex-direction: column; align-items: center; gap: 4px; margin-top: 10px;
+  }
+  .offset-row { display: flex; align-items: center; gap: 6px; }
+  .nudge-btn {
+    width: 32px; height: 32px; background: var(--paper-dark); border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 2px; font-size: 14px; cursor: pointer; display: flex; align-items: center;
+    justify-content: center; transition: all 0.15s; color: var(--ink); font-family: inherit;
+    user-select: none;
+  }
+  .nudge-btn:hover { background: var(--gold); color: white; border-color: var(--gold); }
+  .nudge-btn:active { transform: scale(0.92); }
+  .nudge-center {
+    width: 32px; height: 32px; background: var(--paper-dark); border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 2px; display: flex; align-items: center; justify-content: center;
+    font-size: 9px; color: var(--muted); letter-spacing: 0.06em;
+  }
+  .offset-vals {
+    display: flex; gap: 10px; margin-top: 6px; font-size: 10px; color: var(--muted);
+    align-items: center; flex-wrap: wrap;
+  }
+  .offset-val-box { display: flex; flex-direction: column; gap: 2px; }
+  .offset-val-box span { font-size: 9px; color: rgba(140,128,112,0.5); }
+  .offset-val-input {
+    width: 72px; padding: 5px 8px; background: var(--paper); border: 1px solid var(--paper-dark);
+    border-radius: 2px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--ink);
+  }
+  .offset-val-input:focus { outline: none; border-color: var(--gold); }
+
+  .offset-step-wrap { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+  .offset-step-wrap label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap; }
+  .step-select { padding: 5px 8px; background: var(--paper); border: 1px solid var(--paper-dark); border-radius: 2px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--ink); cursor: pointer; }
+
+  /* Preview */
+  .preview-area { margin-top: 14px; background: #e0dbd2; border: 1px solid rgba(0,0,0,0.08); border-radius: 2px; padding: 14px; text-align: center; }
+  .preview-area canvas { max-width: 100%; border: 1px solid rgba(0,0,0,0.1); box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+  .preview-lbl { font-size: 9px; letter-spacing: 0.14em; color: var(--muted); text-transform: uppercase; margin-bottom: 8px; }
+  .tip { font-size: 10px; color: var(--muted); margin-top: 10px; line-height: 1.6; }
+
+  /* GENERATE */
+  .gen-card { background: var(--ink); border-radius: 2px; padding: 28px 32px; display: flex; align-items: center; gap: 28px; }
+  .gen-info { flex: 1; }
+  .gen-title { font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; color: var(--white); margin-bottom: 4px; }
+  .gen-sub { font-size: 10px; color: rgba(255,255,255,0.3); letter-spacing: 0.06em; }
+  .btn-gen { padding: 13px 28px; background: linear-gradient(135deg, var(--gold), #9a7440); border: none; border-radius: 2px; color: var(--ink); font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+  .btn-gen:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(184,147,90,0.3); }
+  .btn-gen:disabled { opacity: 0.3; cursor: not-allowed; }
+  .prog-area { width: 100%; margin-top: 14px; }
+  .prog-bar-bg { height: 2px; background: rgba(255,255,255,0.08); border-radius: 1px; overflow: hidden; margin-bottom: 6px; }
+  .prog-bar-fill { height: 100%; background: linear-gradient(90deg, var(--gold), var(--gold-light)); transition: width 0.3s ease; width: 0%; }
+  .prog-text { font-size: 10px; color: rgba(255,255,255,0.3); letter-spacing: 0.06em; }
+  .success-area { padding: 4px 0; animation: fadeUp 0.4s ease; }
+  .success-title { font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; color: #5dba83; margin-bottom: 3px; }
+  .success-note { font-size: 10px; color: rgba(255,255,255,0.3); }
+
+  @keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+  @media (max-width: 860px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .main { padding: 24px 18px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-logo">VIP Services</div>
+  <div class="topbar-sep"></div>
+  <div class="topbar-sub">Dreams Riviera Cancún · Generador A5</div>
+</div>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div>
+      <div class="sidebar-title">Generador<br>de <em>Cartas VIP</em></div>
+      <p class="sidebar-desc" style="margin-top:10px;">
+        Formato A5 · Extrae apellidos y habitaciones, los coloca en los rectángulos de la carta y descarga el PDF final listo para imprimir.
+      </p>
+    </div>
+    <div class="step-block" id="sb1">
+      <div class="step-tag"><span class="step-num">Paso 1</span><span class="done-check"> ✓</span></div>
+      <div class="step-name">PDF Reporte VIP</div>
+      <div class="step-hint">Mr. and Mrs. APELLIDO · Room: XXXX</div>
+    </div>
+    <div class="step-block" id="sb2">
+      <div class="step-tag"><span class="step-num">Paso 2</span><span class="done-check"> ✓</span></div>
+      <div class="step-name">PDF Plantilla</div>
+      <div class="step-hint">Carta Dreams con rectángulos en blanco</div>
+    </div>
+    <div class="step-block" id="sb3">
+      <div class="step-tag"><span class="step-num">Paso 3</span><span class="done-check"> ✓</span></div>
+      <div class="step-name">Generar PDF Final</div>
+      <div class="step-hint">A5 · una carta por huésped</div>
+    </div>
+    <div id="sidebar-records" style="display:none;" class="sb-records-wrap">
+      <div class="preview-label">Registros extraídos</div>
+      <div class="rec-count" id="sb-count"></div>
+      <div class="records-mini" id="sb-list"></div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- PASO 1 -->
+    <div class="upload-card">
+      <div class="card-header">
+        <div class="card-num" id="cn1">01</div>
+        <div class="card-title">PDF Fuente — Reporte VIP</div>
+      </div>
+      <div class="card-body">
+        <p style="font-size:11px;color:var(--muted);line-height:1.7;margin-bottom:14px;">
+          Formato detectado automáticamente:<br>
+          <code style="color:var(--gold);font-size:10.5px;">Mr. and Mrs. APELLIDO &nbsp; Room: XXXX</code>
+        </p>
+        <div id="z1-wrap">
+          <div class="upload-zone" id="zone1">
+            <input type="file" accept=".pdf" id="file1">
+            <div class="uz-icon">⊕</div>
+            <div class="uz-label"><strong>Arrastra o selecciona</strong> el PDF del reporte VIP</div>
+          </div>
+        </div>
+        <div id="fl1" style="display:none;"></div>
+        <div id="alert1"></div>
+      </div>
+    </div>
+
+    <!-- PASO 2 -->
+    <div class="upload-card">
+      <div class="card-header">
+        <div class="card-num" id="cn2">02</div>
+        <div class="card-title">PDF Plantilla — Carta Dreams</div>
+      </div>
+      <div class="card-body">
+        <p style="font-size:11px;color:var(--muted);line-height:1.7;margin-bottom:14px;">
+          La carta de bienvenida. Ajusta la posición de la imagen y del texto con los controles.
+        </p>
+        <div id="z2-wrap">
+          <div class="upload-zone" id="zone2">
+            <input type="file" accept=".pdf" id="file2">
+            <div class="uz-icon">⊕</div>
+            <div class="uz-label"><strong>Arrastra o selecciona</strong> la plantilla PDF</div>
+          </div>
+        </div>
+        <div id="fl2" style="display:none;"></div>
+        <div id="alert2"></div>
+
+        <!-- TUNER -->
+        <div class="tuner-section" id="tuner" style="display:none;">
+          <div class="tuner-title">⚙ &nbsp;Ajuste de posición</div>
+
+          <!-- ① OFFSET GLOBAL -->
+          <div class="tuner-group-title">① Posición de la plantilla completa</div>
+          <p style="font-size:10px;color:var(--muted);line-height:1.6;margin-bottom:10px;">
+            Mueve toda la imagen de la carta dentro del área A5. Útil si la plantilla queda descentrada al imprimir.
+          </p>
+
+          <div style="display:flex; gap: 28px; align-items: flex-start; flex-wrap: wrap;">
+            <!-- Joystick -->
+            <div class="offset-control">
+              <div class="offset-row">
+                <button class="nudge-btn" onclick="nudge(0,-1)" title="Arriba">↑</button>
+              </div>
+              <div class="offset-row">
+                <button class="nudge-btn" onclick="nudge(-1,0)" title="Izquierda">←</button>
+                <div class="nudge-center">⊕</div>
+                <button class="nudge-btn" onclick="nudge(1,0)" title="Derecha">→</button>
+              </div>
+              <div class="offset-row">
+                <button class="nudge-btn" onclick="nudge(0,1)" title="Abajo">↓</button>
+              </div>
+            </div>
+
+            <!-- Numeric inputs + step selector -->
+            <div>
+              <div class="offset-vals">
+                <div class="offset-val-box">
+                  <span>Offset X (pt)</span>
+                  <input class="offset-val-input tuner-input" type="number" id="off-x" value="0" step="1" oninput="updatePreview()">
+                </div>
+                <div class="offset-val-box">
+                  <span>Offset Y (pt)</span>
+                  <input class="offset-val-input tuner-input" type="number" id="off-y" value="-48" step="1" oninput="updatePreview()">
+                </div>
+              </div>
+              <div class="offset-step-wrap" style="margin-top:10px;">
+                <label>Paso del botón:</label>
+                <select class="step-select tuner-input" id="nudge-step" style="width:auto;">
+                  <option value="1">1 pt (~0.35 mm)</option>
+                  <option value="3" selected>3 pt (~1 mm)</option>
+                  <option value="6">6 pt (~2 mm)</option>
+                  <option value="14">14 pt (~5 mm)</option>
+                  <option value="28">28 pt (~1 cm)</option>
+                </select>
+              </div>
+              <button onclick="resetOffset()" style="margin-top:8px;font-size:9px;color:var(--muted);background:none;border:none;cursor:pointer;text-decoration:underline;font-family:inherit;letter-spacing:0.06em;">
+                Resetear offset
+              </button>
+            </div>
+          </div>
+
+          <!-- ② TEXTO: Family & Room -->
+          <div class="tuner-group-title">② Posición del texto en los rectángulos</div>
+
+          <div class="tuner-grid">
+            <div class="tuner-group">
+              <label>▣ Rectángulo izq. — Family</label>
+              <div class="tuner-row">
+                <div class="tuner-field">
+                  <span>X · % desde izq.</span>
+                  <input class="tuner-input" type="number" id="t-fam-x" value="17" min="0" max="100" step="0.5" oninput="updatePreview()">
+                </div>
+                <div class="tuner-field">
+                  <span>Y · % desde arriba</span>
+                  <input class="tuner-input" type="number" id="t-fam-y" value="89.5" min="0" max="100" step="0.5" oninput="updatePreview()">
+                </div>
+              </div>
+            </div>
+            <div class="tuner-group">
+              <label>▣ Rectángulo der. — Room</label>
+              <div class="tuner-row">
+                <div class="tuner-field">
+                  <span>X · % desde izq.</span>
+                  <input class="tuner-input" type="number" id="t-room-x" value="61" min="0" max="100" step="0.5" oninput="updatePreview()">
+                </div>
+                <div class="tuner-field">
+                  <span>Y · % desde arriba</span>
+                  <input class="tuner-input" type="number" id="t-room-y" value="89.5" min="0" max="100" step="0.5" oninput="updatePreview()">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ③ FUENTE -->
+          <div class="tuner-group-title">③ Tipografía</div>
+          <div class="tuner-grid-4">
+            <div>
+              <label style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px;">Tamaño (pt)</label>
+              <input class="tuner-input" type="number" id="t-fontsize" value="11" min="6" max="28" step="0.5" oninput="updatePreview()">
+            </div>
+            <div>
+              <label style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px;">Color</label>
+              <input class="tuner-input" type="color" id="t-color" value="#1a1a1a" oninput="updatePreview()" style="height:36px;padding:3px 6px;">
+            </div>
+            <div>
+              <label style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px;">Estilo</label>
+              <select class="tuner-input" id="t-style" oninput="updatePreview()">
+                <option value="normal">Normal</option>
+                <option value="bold">Bold</option>
+                <option value="italic">Italic</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px;">Alineación</label>
+              <select class="tuner-input" id="t-align" oninput="updatePreview()">
+                <option value="left">Izquierda</option>
+                <option value="center">Centro</option>
+                <option value="right">Derecha</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- PREVIEW -->
+          <div class="preview-area" id="preview-area" style="display:none;">
+            <div class="preview-lbl">Vista previa A5 · primer registro</div>
+            <canvas id="preview-canvas"></canvas>
+          </div>
+
+          <p class="tip">
+            💡 Usa las flechas del joystick para mover toda la carta y los porcentajes X/Y para afinar el texto en cada rectángulo. Las <span style="color:#e04040;font-weight:600;">cruces rojas</span> marcan el punto de anclaje del texto.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- PASO 3 -->
+    <div class="gen-card">
+      <div class="gen-info">
+        <div class="gen-title">Generar PDF Final</div>
+        <div class="gen-sub" id="gen-sub">Sube los dos PDFs para continuar</div>
+        <div class="prog-area" id="prog-area" style="display:none;">
+          <div class="prog-bar-bg"><div class="prog-bar-fill" id="prog-fill"></div></div>
+          <div class="prog-text" id="prog-text">Procesando...</div>
+        </div>
+        <div id="success-area" style="display:none;">
+          <div class="success-area">
+            <div class="success-title">◆ &nbsp;PDF Generado y Descargado</div>
+            <div class="success-note" id="success-note"></div>
+          </div>
+        </div>
+      </div>
+      <button class="btn-gen" id="btn-gen" onclick="generatePDF()" disabled>
+        Generar &amp; Descargar
+      </button>
+    </div>
+
+  </main>
+</div>
+
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+// A5 in points: 419.53 × 595.28 pt
+const A5W = 419.53;
+const A5H = 595.28;
+
+const S = { records: [], templatePage: null };
+
+// ── EVENTS ──────────────────────────────────────────────────────
+['zone1','zone2'].forEach(id => {
+  const z = document.getElementById(id);
+  z.addEventListener('dragover', e => { e.preventDefault(); z.classList.add('drag-over'); });
+  z.addEventListener('dragleave', () => z.classList.remove('drag-over'));
+  z.addEventListener('drop', e => {
+    e.preventDefault(); z.classList.remove('drag-over');
+    const f = e.dataTransfer.files[0];
+    if (f && f.type === 'application/pdf')
+      id === 'zone1' ? handleFile1(f) : handleFile2(f);
+  });
+});
+document.getElementById('file1').addEventListener('change', e => { if(e.target.files[0]) handleFile1(e.target.files[0]); });
+document.getElementById('file2').addEventListener('change', e => { if(e.target.files[0]) handleFile2(e.target.files[0]); });
+
+// ── FILE 1 ───────────────────────────────────────────────────────
+async function handleFile1(file) {
+  setAlert(1, 'info', 'Leyendo PDF...');
+  try {
+    const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
+    const total = pdf.numPages;
+    const records = [], failed = [];
+    for (let i = 1; i <= total; i++) {
+      const page = await pdf.getPage(i);
+      const tc   = await page.getTextContent();
+      const text = tc.items.map(it => it.str).join(' ').replace(/\s+/g,' ');
+      const rec  = parseGuest(text);
+      if (rec) records.push(rec); else failed.push(i);
+    }
+    S.records = records;
+    showLoaded(1, file.name); clearAlert(1);
+    if (records.length === 0) {
+      setAlert(1, 'error', 'No se encontraron registros. Verifica el formato "Mr. and Mrs. APELLIDO Room: XXXX".');
+    } else {
+      const w = failed.length > 0 ? ` · ${failed.length} páginas sin datos` : '';
+      setAlert(1, 'success', `✓ ${records.length} registros extraídos de ${total} páginas${w}.`);
+      updateSidebar(records);
+    }
+    sbDone(1); checkReady();
+  } catch(e) { setAlert(1,'error','Error leyendo el PDF. ¿Está protegido?'); console.error(e); }
+}
+
+function parseGuest(text) {
+  const m = text.match(
+    /(?:Mr\.?\s+(?:and\s+)?)?Mrs?\.?\s+([A-ZÁÉÍÓÚÜÑA-Z][A-ZÁÉÍÓÚÜÑA-Za-z\s\-']+?)\s+Room[:\s]+(\d{3,5})/i
+  );
+  if (!m) return null;
+  const name = m[1].trim().toUpperCase();
+  const room = m[2].trim();
+  if (!name || name === 'AND') return null;
+  return { name, room };
+}
+
+// ── FILE 2 ───────────────────────────────────────────────────────
+async function handleFile2(file) {
+  setAlert(2,'info','Cargando plantilla...');
+  try {
+    const pdf  = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
+    const page = await pdf.getPage(1);
+    const scale = 3.0;
+    const vp   = page.getViewport({ scale });
+    const canvas = document.createElement('canvas');
+    canvas.width = vp.width; canvas.height = vp.height;
+    await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+    S.templatePage = { dataUrl: canvas.toDataURL('image/jpeg', 0.95), w: vp.width, h: vp.height };
+    showLoaded(2, file.name); clearAlert(2);
+    document.getElementById('tuner').style.display = '';
+    sbDone(2); updatePreview(); checkReady();
+  } catch(e) { setAlert(2,'error','Error cargando la plantilla.'); console.error(e); }
+}
+
+// ── NUDGE / OFFSET ───────────────────────────────────────────────
+function nudge(dx, dy) {
+  const step = parseFloat(document.getElementById('nudge-step').value);
+  const ox = document.getElementById('off-x');
+  const oy = document.getElementById('off-y');
+  ox.value = (parseFloat(ox.value) + dx * step).toFixed(1);
+  oy.value = (parseFloat(oy.value) + dy * step).toFixed(1);
+  updatePreview();
+}
+function resetOffset() {
+  document.getElementById('off-x').value = 0;
+  document.getElementById('off-y').value = 0;
+  updatePreview();
+}
+
+// ── PREVIEW ──────────────────────────────────────────────────────
+function updatePreview() {
+  if (!S.templatePage) return;
+  document.getElementById('preview-area').style.display = '';
+
+  const canvas = document.getElementById('preview-canvas');
+  const ctx = canvas.getContext('2d');
+  const { dataUrl, w, h } = S.templatePage;
+
+  // Preview canvas: A5 proportions, max 500px wide
+  const maxW = 500;
+  const ratio = A5H / A5W;
+  const cvW = Math.min(maxW, w);
+  const cvH = cvW * ratio;
+  canvas.width  = cvW;
+  canvas.height = cvH;
+
+  // Scale factors from A5 pts to canvas px
+  const scX = cvW / A5W;
+  const scY = cvH / A5H;
+
+  // Offset (in pt → canvas px)
+  const offX = parseFloat(document.getElementById('off-x').value) * scX;
+  const offY = parseFloat(document.getElementById('off-y').value) * scY;
+
+  // Background: A5 gray
+  ctx.fillStyle = '#d8d3ca';
+  ctx.fillRect(0, 0, cvW, cvH);
+
+  const img = new Image();
+  img.onload = () => {
+    // Draw template image scaled to fit A5 + offset
+    ctx.drawImage(img, offX, offY, cvW, cvH);
+
+    // Text positions (% of A5 → canvas px)
+    const famX  = val('t-fam-x')  / 100 * cvW;
+    const famY  = val('t-fam-y')  / 100 * cvH;
+    const roomX = val('t-room-x') / 100 * cvW;
+    const roomY = val('t-room-y') / 100 * cvH;
+    const size  = val('t-fontsize') * scX * 1.33;
+    const color = document.getElementById('t-color').value;
+    const style = document.getElementById('t-style').value;
+    const align = document.getElementById('t-align').value;
+
+    const sn = S.records.length > 0 ? S.records[0].name : 'BOWSER';
+    const sr = S.records.length > 0 ? S.records[0].room : '2430';
+
+    // Crosshairs
+    ctx.strokeStyle = 'rgba(220,40,40,0.8)'; ctx.lineWidth = 1.5;
+    [[famX, famY],[roomX, roomY]].forEach(([x, y]) => {
+      ctx.beginPath(); ctx.moveTo(x-16,y); ctx.lineTo(x+16,y); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x,y-16); ctx.lineTo(x,y+16); ctx.stroke();
+    });
+
+    ctx.font = `${style==='italic'?'italic ':''}${style==='bold'?'bold ':''}${size}px Arial`;
+    ctx.fillStyle = color;
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = align;
+    ctx.fillText(`Family: ${sn}`, famX, famY);
+    ctx.fillText(`Room: ${sr}`,   roomX, roomY);
+  };
+  img.src = dataUrl;
+}
+
+function val(id) { return parseFloat(document.getElementById(id).value); }
+
+// ── GENERATE ─────────────────────────────────────────────────────
+function checkReady() {
+  const ok = S.records.length > 0 && S.templatePage;
+  document.getElementById('btn-gen').disabled = !ok;
+  if (ok) {
+    document.getElementById('gen-sub').textContent =
+      `${S.records.length} registros · formato A5 · listo para generar`;
+    document.getElementById('sb3').className = 'step-block active';
+  }
+}
+
+async function generatePDF() {
+  const { jsPDF } = window.jspdf;
+  document.getElementById('btn-gen').disabled = true;
+  document.getElementById('prog-area').style.display = '';
+
+  const offX  = val('off-x');
+  const offY  = val('off-y');
+  const famX  = val('t-fam-x')  / 100;
+  const famY  = val('t-fam-y')  / 100;
+  const roomX = val('t-room-x') / 100;
+  const roomY = val('t-room-y') / 100;
+  const fontSize = val('t-fontsize');
+  const color  = document.getElementById('t-color').value;
+  const style  = document.getElementById('t-style').value;
+  const align  = document.getElementById('t-align').value;
+  const [cr,cg,cb] = hexRgb(color);
+  const fontStyle  = style === 'bold' ? 'bold' : style === 'italic' ? 'italic' : 'normal';
+
+  const pdf = new jsPDF({ orientation:'portrait', unit:'pt', format:'a5' });
+  const total = S.records.length;
+
+  for (let i = 0; i < total; i++) {
+    const rec = S.records[i];
+    if (i > 0) pdf.addPage('a5', 'portrait');
+
+    // Template image: fill A5 + offset
+    pdf.addImage(
+      S.templatePage.dataUrl, 'JPEG',
+      offX, offY,      // x, y — offset moves the whole image
+      A5W, A5H         // always fill full A5
+    );
+
+    // Text: % of A5
+    const fx = famX  * A5W;
+    const fy = famY  * A5H;
+    const rx = roomX * A5W;
+    const ry = roomY * A5H;
+
+    pdf.setFont('helvetica', fontStyle);
+    pdf.setFontSize(fontSize);
+    pdf.setTextColor(cr, cg, cb);
+    pdf.text(`Family: ${rec.name}`, fx, fy, { align, baseline: 'middle' });
+    pdf.text(`Room: ${rec.room}`,   rx, ry, { align, baseline: 'middle' });
+
+    const pct = Math.round((i+1)/total*100);
+    document.getElementById('prog-fill').style.width = pct+'%';
+    document.getElementById('prog-text').textContent =
+      `Generando ${i+1} / ${total} — ${rec.name} · Hab. ${rec.room}`;
+    if (i % 8 === 0) await sleep(5);
+  }
+
+  pdf.save(`VIP_Cartas_A5_${ts()}.pdf`);
+  document.getElementById('prog-area').style.display = 'none';
+  document.getElementById('success-area').style.display = '';
+  document.getElementById('success-note').textContent = `${total} cartas A5 generadas · ${ts()}`;
+  // Re-enable button so user can adjust and download again
+  document.getElementById('btn-gen').disabled = false;
+  sbDone(3);
+}
+
+// ── HELPERS ──────────────────────────────────────────────────────
+function showLoaded(n, name) {
+  document.getElementById(`z${n}-wrap`).style.display = 'none';
+  const fl = document.getElementById('fl'+n);
+  fl.style.display = '';
+  fl.innerHTML = `<div class="file-loaded">
+    <span class="fl-icon">✓</span>
+    <span class="fl-name">${esc(name)}</span>
+    <button class="fl-change" onclick="resetFile(${n})">Cambiar</button>
+  </div>`;
+}
+
+function resetFile(n) {
+  document.getElementById(`z${n}-wrap`).style.display = '';
+  const fl = document.getElementById('fl'+n); fl.style.display = 'none'; fl.innerHTML = '';
+  clearAlert(n);
+  const cn = document.getElementById('cn'+n); cn.className='card-num'; cn.textContent='0'+n;
+  document.getElementById('sb'+n).className = 'step-block';
+  if (n===1) { S.records=[]; document.getElementById('file1').value=''; document.getElementById('sidebar-records').style.display='none'; }
+  else { S.templatePage=null; document.getElementById('file2').value=''; document.getElementById('tuner').style.display='none'; document.getElementById('preview-area').style.display='none'; }
+  document.getElementById('btn-gen').disabled=true;
+  document.getElementById('gen-sub').textContent='Sube los dos PDFs para continuar';
+}
+
+function setAlert(n,t,m){ document.getElementById('alert'+n).innerHTML=`<div class="alert alert-${t}">${m}</div>`; }
+function clearAlert(n){ document.getElementById('alert'+n).innerHTML=''; }
+
+function sbDone(n){
+  document.getElementById('sb'+n).className='step-block done';
+  const cn=document.getElementById('cn'+n); if(cn){cn.className='card-num done';cn.textContent='✓';}
+}
+
+function updateSidebar(records){
+  document.getElementById('sidebar-records').style.display='';
+  document.getElementById('sb-count').textContent=`${records.length} registros`;
+  document.getElementById('sb-list').innerHTML=
+    records.slice(0,80).map(r=>`<div class="rec-row"><span class="rec-name">${esc(r.name)}</span><span class="rec-room">Hab.&nbsp;${esc(r.room)}</span></div>`).join('')+
+    (records.length>80?`<div class="rec-row"><span class="rec-name" style="opacity:.35">…y ${records.length-80} más</span></div>`:'');
+}
+
+function hexRgb(hex){ return [parseInt(hex.slice(1,3),16),parseInt(hex.slice(3,5),16),parseInt(hex.slice(5,7),16)]; }
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+function ts(){ const d=new Date(); return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`; }
+</script>
+</body>
+</html>

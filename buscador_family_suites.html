@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, interactive-widget=resizes-content">
+<title>Family Suites</title>
+<style>
+  :root{
+    --bg:#0E1116;
+    --card:#171B22;
+    --card-border:#262C36;
+    --accent:#4F8EF7;
+    --accent-soft:rgba(79,142,247,0.12);
+    --text:#F2F4F8;
+    --text-dim:#8A93A3;
+    --good:#3DD68C;
+    --bad:#F76B6B;
+    --dxtv:#4F8EF7;
+    --pcoj:#C77DFF;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Plus Jakarta Sans','Segoe UI',system-ui,-apple-system,sans-serif;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    min-height:100vh;
+    min-height:100dvh;
+    padding:env(safe-area-inset-top,20px) 16px calc(env(safe-area-inset-bottom,16px) + 12px);
+    transition:padding .15s;
+  }
+  .wrap{
+    width:100%;
+    max-width:480px;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    transition:gap .15s;
+  }
+  header{
+    text-align:center;
+    margin:6px 0 4px;
+    max-height:60px;
+    overflow:hidden;
+    transition:max-height .18s ease, opacity .18s ease, margin .18s ease;
+  }
+  header h1{
+    font-size:19px;
+    font-weight:700;
+    margin:0 0 2px;
+    letter-spacing:-0.01em;
+  }
+  header p{
+    font-size:12.5px;
+    color:var(--text-dim);
+    margin:0;
+  }
+
+  /* ---- Modo compacto: se activa cuando el teclado está abierto ---- */
+  body.kb-open .wrap{ gap:8px; }
+  body.kb-open header{
+    max-height:0;
+    opacity:0;
+    margin:0;
+  }
+  body.kb-open .mode-toggle{ padding:3px; }
+  body.kb-open .mode-toggle button{ padding:6px 8px; font-size:12px; }
+  body.kb-open .search-card{ padding:10px 12px; border-radius:14px; }
+  body.kb-open .search-card label{ font-size:10px; margin-bottom:5px; }
+  body.kb-open .input-row{ padding:2px 2px 2px 12px; border-radius:11px; }
+  body.kb-open .input-row input{ font-size:20px; padding:8px 0; }
+  body.kb-open .clear-btn{ width:32px; height:32px; }
+  body.kb-open .placeholder-card{ padding:14px 12px; font-size:12.5px; }
+  body.kb-open .result-card{ padding:12px 14px; border-radius:14px; }
+  body.kb-open .result-suite{ margin-bottom:8px; }
+  body.kb-open .rooms-row{ gap:8px; margin-bottom:10px; }
+  body.kb-open .room-pill{ padding:8px 8px; border-radius:11px; }
+  body.kb-open .room-pill .room-num{ font-size:21px; }
+  body.kb-open .room-pill .room-tag{ font-size:9px; margin-top:1px; }
+  body.kb-open .cat-badge{ padding:6px 12px; font-size:12px; }
+  body.kb-open .not-found{ padding:12px 14px; }
+  body.kb-open .not-found .icon{ font-size:18px; margin-bottom:2px; }
+  body.kb-open .not-found .title{ font-size:13px; }
+  body.kb-open .not-found .sub{ font-size:11px; }
+  body.kb-open footer{ display:none; }
+
+  .mode-toggle{
+    display:flex;
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:14px;
+    padding:4px;
+    gap:4px;
+  }
+  .mode-toggle button{
+    flex:1;
+    border:none;
+    background:transparent;
+    color:var(--text-dim);
+    font-family:inherit;
+    font-size:13.5px;
+    font-weight:600;
+    padding:10px 8px;
+    border-radius:10px;
+    cursor:pointer;
+    transition:background .15s, color .15s;
+  }
+  .mode-toggle button.active{
+    background:var(--accent);
+    color:#fff;
+  }
+
+  .search-card{
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:18px;
+    padding:16px;
+  }
+  .search-card label{
+    display:block;
+    font-size:12px;
+    font-weight:600;
+    color:var(--text-dim);
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    margin-bottom:8px;
+  }
+  .input-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background:#0B0E13;
+    border:1px solid var(--card-border);
+    border-radius:14px;
+    padding:4px 4px 4px 16px;
+    transition:border-color .15s;
+  }
+  .input-row:focus-within{
+    border-color:var(--accent);
+  }
+  .input-row input{
+    flex:1;
+    background:transparent;
+    border:none;
+    outline:none;
+    color:var(--text);
+    font-family:inherit;
+    font-size:26px;
+    font-weight:700;
+    letter-spacing:.02em;
+    padding:12px 0;
+    min-width:0;
+  }
+  .input-row input::placeholder{
+    color:#454C59;
+    font-weight:600;
+  }
+  .clear-btn{
+    width:38px;
+    height:38px;
+    border-radius:10px;
+    border:none;
+    background:#1F252F;
+    color:var(--text-dim);
+    font-size:18px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    flex-shrink:0;
+  }
+  .clear-btn:active{ background:#2A313D; }
+
+  /* Result area */
+  #result-area{
+    min-height:120px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+
+  .placeholder-card{
+    border:1.5px dashed var(--card-border);
+    border-radius:18px;
+    padding:28px 16px;
+    text-align:center;
+    color:var(--text-dim);
+    font-size:14px;
+  }
+
+  .result-card{
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:18px;
+    padding:20px;
+    animation:pop .18s ease-out;
+  }
+  @keyframes pop{
+    from{ opacity:0; transform:translateY(6px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+
+  .result-suite{
+    font-size:12px;
+    color:var(--text-dim);
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    margin-bottom:14px;
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .result-suite b{
+    color:var(--text);
+    font-size:13px;
+  }
+
+  .rooms-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:16px;
+  }
+  .room-pill{
+    flex:1;
+    background:var(--accent-soft);
+    border:1px solid rgba(79,142,247,0.35);
+    border-radius:14px;
+    padding:14px 10px;
+    text-align:center;
+  }
+  .room-pill .room-num{
+    font-size:30px;
+    font-weight:800;
+    color:var(--text);
+    letter-spacing:.01em;
+    line-height:1.1;
+  }
+  .room-pill .room-tag{
+    font-size:10.5px;
+    color:var(--accent);
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    margin-top:3px;
+  }
+  .plus-divider{
+    color:var(--text-dim);
+    font-size:18px;
+    font-weight:700;
+  }
+
+  .cat-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:9px 16px;
+    border-radius:100px;
+    font-size:14px;
+    font-weight:700;
+    letter-spacing:.02em;
+  }
+  .cat-badge.DXTV{ background:rgba(79,142,247,0.15); color:var(--dxtv); }
+  .cat-badge.PCOJ{ background:rgba(199,125,255,0.15); color:var(--pcoj); }
+  .cat-badge .dot{
+    width:7px; height:7px; border-radius:50%;
+    background:currentColor;
+  }
+
+  .not-found{
+    background:rgba(247,107,107,0.08);
+    border:1px solid rgba(247,107,107,0.3);
+    border-radius:18px;
+    padding:20px;
+    text-align:center;
+  }
+  .not-found .icon{ font-size:26px; margin-bottom:6px; }
+  .not-found .title{ font-weight:700; color:var(--bad); font-size:15px; margin-bottom:3px; }
+  .not-found .sub{ font-size:12.5px; color:var(--text-dim); }
+
+  /* Reverse mode: list of matches when room belongs to multiple? (won't happen but safe) */
+  .reverse-link{
+    font-size:12px;
+    color:var(--text-dim);
+    text-align:center;
+    margin-top:2px;
+  }
+  .reverse-link b{ color:var(--accent); }
+
+  footer{
+    text-align:center;
+    font-size:11px;
+    color:#454C59;
+    margin-top:auto;
+    padding-top:18px;
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>Family Suites</h1>
+    <p>Identifica las habitaciones conectadas en segundos</p>
+  </header>
+
+  <div class="mode-toggle">
+    <button id="btn-suite" class="active">Por # de Suite</button>
+    <button id="btn-room">Por # de Habitación</button>
+  </div>
+
+  <div class="search-card">
+    <label id="search-label">Número de Family Suite</label>
+    <div class="input-row">
+      <input id="search-input" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="Ej. 8009" autocomplete="off" autofocus maxlength="4">
+      <button class="clear-btn" id="clear-btn" title="Limpiar">✕</button>
+    </div>
+  </div>
+
+  <div id="result-area"></div>
+
+  <footer>72 family suites cargadas · datos locales, sin conexión</footer>
+</div>
+
+<script>
+const DATA = {"8004": {"r1": "2326", "r2": "2324", "cat": "DXTV"}, "8026": {"r1": "2327", "r2": "2325", "cat": "DXTV"}, "9905": {"r1": "2204", "r2": "2206", "cat": "PCOJ"}, "9919": {"r1": "1406", "r2": "1404", "cat": "PCOJ"}, "9933": {"r1": "2504", "r2": "2506", "cat": "PCOJ"}, "9955": {"r1": "1341", "r2": "1343", "cat": "DXTV"}, "9976": {"r1": "1216", "r2": "1214", "cat": "DXTV"}, "9998": {"r1": "2241", "r2": "2243", "cat": "DXTV"}, "8009": {"r1": "2317", "r2": "2315", "cat": "DXTV"}, "8027": {"r1": "2227", "r2": "2225", "cat": "DXTV"}, "9906": {"r1": "1206", "r2": "1204", "cat": "PCOJ"}, "9920": {"r1": "1506", "r2": "1504", "cat": "PCOJ"}, "9934": {"r1": "2511", "r2": "2509", "cat": "PCOJ"}, "9959": {"r1": "1226", "r2": "1224", "cat": "DXTV"}, "9982": {"r1": "1327", "r2": "1325", "cat": "DXTV"}, "9999": {"r1": "2341", "r2": "2343", "cat": "DXTV"}, "8010": {"r1": "2217", "r2": "2215", "cat": "DXTV"}, "8028": {"r1": "2544", "r2": "2546", "cat": "DXTV"}, "9908": {"r1": "1212", "r2": "1210", "cat": "PCOJ"}, "9922": {"r1": "2212", "r2": "2210", "cat": "PCOJ"}, "9935": {"r1": "2411", "r2": "2409", "cat": "PCOJ"}, "9960": {"r1": "1326", "r2": "1324", "cat": "DXTV"}, "9983": {"r1": "1227", "r2": "1225", "cat": "DXTV"}, "8011": {"r1": "2539", "r2": "2540", "cat": "DXTV"}, "8029": {"r1": "2444", "r2": "2446", "cat": "DXTV"}, "9909": {"r1": "1310", "r2": "1312", "cat": "PCOJ"}, "9923": {"r1": "2312", "r2": "2310", "cat": "PCOJ"}, "9936": {"r1": "2311", "r2": "2309", "cat": "PCOJ"}, "9965": {"r1": "1317", "r2": "1315", "cat": "DXTV"}, "9984": {"r1": "1544", "r2": "1546", "cat": "DXTV"}, "8012": {"r1": "2439", "r2": "2440", "cat": "DXTV"}, "8030": {"r1": "2344", "r2": "2346", "cat": "DXTV"}, "9910": {"r1": "1412", "r2": "1410", "cat": "PCOJ"}, "9924": {"r1": "2412", "r2": "2410", "cat": "PCOJ"}, "9939": {"r1": "1511", "r2": "1509", "cat": "PCOJ"}, "9966": {"r1": "1217", "r2": "1215", "cat": "DXTV"}, "9985": {"r1": "1444", "r2": "1446", "cat": "DXTV"}, "8013": {"r1": "2339", "r2": "2340", "cat": "DXTV"}, "9900": {"r1": "1245", "r2": "1247", "cat": "DXTV"}, "9911": {"r1": "1512", "r2": "1510", "cat": "PCOJ"}, "9925": {"r1": "2512", "r2": "2510", "cat": "PCOJ"}, "9940": {"r1": "1411", "r2": "1409", "cat": "PCOJ"}, "9967": {"r1": "1539", "r2": "1540", "cat": "DXTV"}, "9986": {"r1": "1344", "r2": "1346", "cat": "DXTV"}, "8014": {"r1": "2239", "r2": "2240", "cat": "DXTV"}, "9901": {"r1": "1246", "r2": "1244", "cat": "DXTV"}, "9912": {"r1": "1505", "r2": "1503", "cat": "PCOJ"}, "9926": {"r1": "2505", "r2": "2503", "cat": "PCOJ"}, "9941": {"r1": "1311", "r2": "1309", "cat": "PCOJ"}, "9968": {"r1": "1439", "r2": "1440", "cat": "DXTV"}, "9990": {"r1": "2329", "r2": "2328", "cat": "DXTV"}, "8016": {"r1": "2345", "r2": "2347", "cat": "DXTV"}, "9902": {"r1": "2247", "r2": "2245", "cat": "DXTV"}, "9913": {"r1": "1405", "r2": "1403", "cat": "PCOJ"}, "9927": {"r1": "2405", "r2": "2403", "cat": "PCOJ"}, "9946": {"r1": "1329", "r2": "1328", "cat": "DXTV"}, "9969": {"r1": "1339", "r2": "1440", "cat": "DXTV"}, "9991": {"r1": "2229", "r2": "2228", "cat": "DXTV"}, "8020": {"r1": "2216", "r2": "2214", "cat": "DXTV"}, "9903": {"r1": "2246", "r2": "2244", "cat": "DXTV"}, "9914": {"r1": "1305", "r2": "1303", "cat": "PCOJ"}, "9928": {"r1": "2305", "r2": "2303", "cat": "PCOJ"}, "9947": {"r1": "1229", "r2": "1228", "cat": "DXTV"}, "9970": {"r1": "1239", "r2": "1240", "cat": "DXTV"}, "9995": {"r1": "2332", "r2": "2331", "cat": "DXTV"}, "8021": {"r1": "2316", "r2": "2314", "cat": "DXTV"}, "9904": {"r1": "2306", "r2": "2304", "cat": "PCOJ"}, "9918": {"r1": "1306", "r2": "1304", "cat": "PCOJ"}, "9932": {"r1": "2406", "r2": "2404", "cat": "PCOJ"}, "9954": {"r1": "1241", "r2": "1243", "cat": "DXTV"}, "9972": {"r1": "1345", "r2": "1347", "cat": "DXTV"}, "9996": {"r1": "2232", "r2": "2231", "cat": "DXTV"}};
+
+// Build reverse lookup: room number -> suite number
+const REVERSE = {};
+for (const suite in DATA) {
+  const d = DATA[suite];
+  if (d.r1) REVERSE[d.r1] = suite;
+  if (d.r2) REVERSE[d.r2] = suite;
+}
+
+const input = document.getElementById('search-input');
+const resultArea = document.getElementById('result-area');
+const clearBtn = document.getElementById('clear-btn');
+const btnSuite = document.getElementById('btn-suite');
+const btnRoom = document.getElementById('btn-room');
+const searchLabel = document.getElementById('search-label');
+
+let mode = 'suite'; // 'suite' | 'room'
+
+function setMode(newMode){
+  mode = newMode;
+  btnSuite.classList.toggle('active', mode === 'suite');
+  btnRoom.classList.toggle('active', mode === 'suite' ? false : true);
+  searchLabel.textContent = mode === 'suite' ? 'Número de Family Suite' : 'Número de Habitación individual';
+  input.placeholder = mode === 'suite' ? 'Ej. 8009' : 'Ej. 2317';
+  input.value = '';
+  render();
+  input.focus();
+}
+btnSuite.addEventListener('click', () => setMode('suite'));
+btnRoom.addEventListener('click', () => setMode('room'));
+
+function placeholderCard(){
+  const icon = mode === 'suite' ? '🔑' : '🚪';
+  const txt = mode === 'suite'
+    ? 'Escribe el número de Family Suite para ver sus dos habitaciones y categoría'
+    : 'Escribe el número de una habitación individual para ver a qué Family Suite pertenece';
+  return `<div class="placeholder-card">${icon}<br><br>${txt}</div>`;
+}
+
+function renderResultCard(suite, d){
+  return `
+    <div class="result-card">
+      <div class="result-suite">FAMILY SUITE <b>${suite}</b></div>
+      <div class="rooms-row">
+        <div class="room-pill">
+          <div class="room-num">${d.r1}</div>
+          <div class="room-tag">Habitación A</div>
+        </div>
+        <div class="plus-divider">+</div>
+        <div class="room-pill">
+          <div class="room-num">${d.r2}</div>
+          <div class="room-tag">Habitación B</div>
+        </div>
+      </div>
+      <span class="cat-badge ${d.cat}"><span class="dot"></span>${d.cat}</span>
+    </div>
+  `;
+}
+
+function notFoundCard(query){
+  return `
+    <div class="not-found">
+      <div class="icon">🔍</div>
+      <div class="title">No encontrado</div>
+      <div class="sub">"${query}" no está en la lista de family suites</div>
+    </div>
+  `;
+}
+
+function render(){
+  const raw = input.value.trim();
+  if (!raw){
+    resultArea.innerHTML = placeholderCard();
+    return;
+  }
+
+  if (mode === 'suite'){
+    const d = DATA[raw];
+    if (d){
+      resultArea.innerHTML = renderResultCard(raw, d);
+    } else {
+      resultArea.innerHTML = notFoundCard(raw);
+    }
+  } else {
+    const suite = REVERSE[raw];
+    if (suite){
+      const d = DATA[suite];
+      resultArea.innerHTML = renderResultCard(suite, d) +
+        `<div class="reverse-link">Habitación <b>${raw}</b> pertenece a esta family suite</div>`;
+    } else {
+      resultArea.innerHTML = notFoundCard(raw);
+    }
+  }
+}
+
+input.addEventListener('input', () => {
+  // keep digits only
+  input.value = input.value.replace(/[^0-9]/g, '');
+  render();
+});
+
+clearBtn.addEventListener('click', () => {
+  input.value = '';
+  render();
+  input.focus();
+});
+
+// ---- Modo compacto cuando aparece el teclado ----
+function setKbOpen(isOpen){
+  document.body.classList.toggle('kb-open', isOpen);
+}
+input.addEventListener('focus', () => setKbOpen(true));
+input.addEventListener('blur', () => setKbOpen(false));
+
+// Respaldo: detectar el teclado por el cambio de tamaño del viewport visual
+// (cubre casos donde el foco no dispara el resize a tiempo en algunos navegadores)
+if (window.visualViewport){
+  const baseHeight = window.visualViewport.height;
+  window.visualViewport.addEventListener('resize', () => {
+    const shrunk = (baseHeight - window.visualViewport.height) > 120;
+    if (shrunk || document.activeElement === input){
+      setKbOpen(true);
+    } else if (document.activeElement !== input){
+      setKbOpen(false);
+    }
+  });
+}
+
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spa Menu — VIP Services (LC)</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+
+  @page { size: letter; margin: 0; }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #fff;
+    font-family: 'Jost', sans-serif;
+    color: #1a1a1a;
+    width: 8.5in;
+    min-height: 11in;
+    display: flex;
+    justify-content: center;
+    padding: 0 0.55in;
+  }
+
+  .page {
+    width: 6.2in;
+    padding: 0.32in 0;
+  }
+
+  /* ── HEADER ───────────────────────────────── */
+  .header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #1a1a1a;
+    margin-bottom: 12px;
+  }
+
+  .header-eyebrow {
+    font-size: 7.5px;
+    font-weight: 500;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: #888;
+    margin-bottom: 3px;
+  }
+
+  .header-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 30px;
+    font-weight: 300;
+    line-height: 1;
+    color: #1a1a1a;
+  }
+
+  .header-title em { font-style: italic; }
+
+  .vip-logo {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0px;
+  }
+
+  .vip-from {
+    font-size: 7px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #999;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 1px;
+  }
+
+  .vip-from::before {
+    content: '';
+    display: inline-block;
+    width: 5px;
+    height: 5px;
+    background: #1a1a1a;
+  }
+
+  .vip-wordmark { display: flex; align-items: baseline; }
+
+  .vip-word {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1a1a1a;
+    letter-spacing: -0.5px;
+  }
+
+  .vip-services {
+    font-size: 22px;
+    font-weight: 300;
+    color: #999;
+    letter-spacing: -0.5px;
+  }
+
+  /* ── LC BAR ───────────────────────────────── */
+  .lc-bar {
+    background: #1a1a1a;
+    color: #fff;
+    padding: 6px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    gap: 16px;
+  }
+
+  .lc-text {
+    font-size: 9.5px;
+    font-weight: 300;
+    line-height: 1.55;
+    flex: 1;
+  }
+
+  .lc-text strong { font-weight: 600; }
+
+  .lc-formula {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .lc-box {
+    border: 1.5px solid #fff;
+    padding: 2px 9px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+  }
+
+  .lc-op {
+    font-size: 13px;
+    font-weight: 300;
+    color: #aaa;
+  }
+
+  /* ── SECTION ──────────────────────────────── */
+  .section { margin-bottom: 12px; }
+
+  .sec-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 4px;
+  }
+
+  .sec-head-left {
+    display: flex;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  .sec-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    font-weight: 400;
+    color: #1a1a1a;
+    line-height: 1;
+  }
+
+  .sec-tag {
+    font-size: 7px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #bbb;
+    white-space: nowrap;
+  }
+
+  .sec-rule {
+    flex: 1;
+    height: 1px;
+    background: #ddd;
+  }
+
+  /* ── TABLE ────────────────────────────────── */
+  .t-head {
+    display: grid;
+    padding: 2px 0 3px;
+    border-bottom: 1px solid #1a1a1a;
+    margin-bottom: 1px;
+  }
+
+  .t-head span {
+    font-size: 7.5px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #999;
+    text-align: right;
+  }
+
+  .t-head span:first-child {
+    text-align: left;
+    color: #bbb;
+  }
+
+  .cols-3 { grid-template-columns: 1fr 60px 60px 60px; }
+  .cols-1 { grid-template-columns: 1fr 70px; }
+
+  .t-row {
+    display: grid;
+    align-items: center;
+    padding: 4px 0;
+    border-bottom: 1px solid #efefef;
+  }
+
+  .t-row:last-child { border-bottom: none; }
+
+  .t-name {
+    font-size: 11px;
+    font-weight: 400;
+    color: #1a1a1a;
+    line-height: 1.2;
+  }
+
+  .t-sub {
+    font-size: 9px;
+    color: #999;
+    font-style: italic;
+    margin-top: 1px;
+  }
+
+  .t-price {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 13px;
+    text-align: right;
+    color: #1a1a1a;
+  }
+
+  .t-price.na {
+    color: #d0d0d0;
+    font-size: 12px;
+  }
+
+  .badge {
+    display: inline-block;
+    border: 1px solid #1a1a1a;
+    font-size: 6.5px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 1px 5px;
+    border-radius: 2px;
+    margin-left: 7px;
+    vertical-align: middle;
+    position: relative;
+    top: -1px;
+  }
+
+  /* ── ADD-ON STRIP ─────────────────────────── */
+  .addon-strip {
+    background: #f5f5f5;
+    border-left: 2px solid #1a1a1a;
+    padding: 5px 11px;
+    margin-top: 5px;
+  }
+
+  .addon-label {
+    font-size: 7.5px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #777;
+    margin-bottom: 3px;
+  }
+
+  .addon-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 2px 0;
+    border-bottom: 1px dashed #ddd;
+  }
+
+  .addon-row:last-child { border-bottom: none; }
+
+  .addon-name { font-size: 11px; color: #1a1a1a; }
+
+  .addon-price {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 13px;
+    color: #555;
+    white-space: nowrap;
+    margin-left: 12px;
+  }
+
+  /* ── FOOTER ───────────────────────────────── */
+  .footer {
+    border-top: 1.5px solid #1a1a1a;
+    padding-top: 6px;
+    margin-top: 2px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .footer-note {
+    font-size: 8.5px;
+    color: #999;
+    line-height: 1.6;
+  }
+
+  .footer-ext {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 17px;
+    color: #1a1a1a;
+  }
+
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div>
+      <div class="header-eyebrow">Dreams® Resort &amp; Spa · Riviera Cancún</div>
+      <div class="header-title">Spa <em>Menu</em></div>
+    </div>
+    <div class="vip-logo">
+      <div class="vip-wordmark">
+        <span class="vip-word">VIP</span><span class="vip-services">Services</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- LC BAR -->
+  <div class="lc-bar">
+    <div class="lc-text">
+      Present <strong>at least 1 Leisure Cash voucher</strong> to apply these prices.
+      You can also use your own money on top of Leisure Cash to cover more treatments.
+    </div>
+    <div class="lc-formula">
+      <div class="lc-box" style="padding:4px 10px; line-height:1.3; text-align:center;">
+        <span style="display:block; font-size:8.5px; letter-spacing:1.5px; font-weight:600;">Leisure</span>
+        <span style="display:block; font-size:8.5px; letter-spacing:1.5px; font-weight:600;">Cash</span>
+      </div>
+      <span class="lc-op">+</span>
+      <div class="lc-box">$$$</div>
+      <span class="lc-op">=</span>
+      <div style="width:30px;height:30px;border-radius:50%;border:1.5px solid #fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;flex-shrink:0;">
+        <div style="display:flex;gap:5px;margin-top:2px;">
+          <div style="width:3px;height:3px;background:#fff;border-radius:50%;"></div>
+          <div style="width:3px;height:3px;background:#fff;border-radius:50%;"></div>
+        </div>
+        <div style="width:11px;height:5px;border-bottom:1.5px solid #fff;border-radius:0 0 8px 8px;margin-bottom:2px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MASSAGES -->
+  <div class="section">
+    <div class="sec-head">
+      <div class="sec-head-left">
+        <span class="sec-name">Massages</span>
+        <span class="sec-tag">Best Sellers</span>
+      </div>
+      <span class="sec-rule"></span>
+    </div>
+
+    <div class="t-head cols-3">
+      <span></span>
+      <span>25 min</span>
+      <span>50 min</span>
+      <span>80 min</span>
+    </div>
+
+    <div class="t-row cols-3">
+      <div>
+        <span class="t-name">Relaxing Massage</span>
+        <span class="badge">Best Seller</span>
+      </div>
+      <div class="t-price">$75</div>
+      <div class="t-price">$100</div>
+      <div class="t-price">$125</div>
+    </div>
+
+    <div class="t-row cols-3">
+      <div class="t-name">Deep Tissue / Tension Relief Massage</div>
+      <div class="t-price">$75</div>
+      <div class="t-price">$100</div>
+      <div class="t-price">$125</div>
+    </div>
+
+    <div class="t-row cols-3">
+      <div class="t-name">Hot Stones</div>
+      <div class="t-price na">—</div>
+      <div class="t-price na">—</div>
+      <div class="t-price">$200</div>
+    </div>
+
+    <div class="addon-strip">
+      <div class="addon-label">Add-ons — available with any massage</div>
+      <div class="addon-row">
+        <span class="addon-name">Hydrotherapy &ndash; Sauna, Steam Room &amp; Hydromassage</span>
+        <span class="addon-price">Free / person</span>
+      </div>
+      <div class="addon-row">
+        <span class="addon-name">CBD Oil · Chronic pain, stiffness &amp; arthritis</span>
+        <span class="addon-price">+$25 / person</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- POPULAR TREATMENTS -->
+  <div class="section">
+    <div class="sec-head">
+      <div class="sec-head-left">
+        <span class="sec-name">Treatments</span>
+        <span class="sec-tag">Popular</span>
+      </div>
+      <span class="sec-rule"></span>
+    </div>
+
+    <div class="t-head cols-3">
+      <span></span>
+      <span>25 min</span>
+      <span>50 min</span>
+      <span>80 min</span>
+    </div>
+
+    <div class="t-row cols-3">
+      <div class="t-name">Neck, Back &amp; Shoulder</div>
+      <div class="t-price">$75</div>
+      <div class="t-price">$100</div>
+      <div class="t-price na">—</div>
+    </div>
+
+    <div class="t-row cols-3">
+      <div class="t-name">Foot Massage</div>
+      <div class="t-price">$50</div>
+      <div class="t-price">$100</div>
+      <div class="t-price na">—</div>
+    </div>
+
+    <div class="t-row cols-3">
+      <div class="t-name">Scalp Massage</div>
+      <div class="t-price">$50</div>
+      <div class="t-price">$100</div>
+      <div class="t-price na">—</div>
+    </div>
+
+    <div class="t-row cols-3">
+      <div class="t-name">Mini Facial</div>
+      <div class="t-price">$75</div>
+      <div class="t-price na">—</div>
+      <div class="t-price na">—</div>
+    </div>
+
+    <div class="t-row cols-3">
+      <div class="t-name">Pedicure</div>
+      <div class="t-price na">—</div>
+      <div class="t-price">$75</div>
+      <div class="t-price">$100</div>
+    </div>
+
+    <div class="t-row cols-3">
+      <div class="t-name">Manicure</div>
+      <div class="t-price na">—</div>
+      <div class="t-price">$75</div>
+      <div class="t-price">$100</div>
+    </div>
+
+    <div class="t-row cols-3">
+      <div>
+        <div class="t-name">Hydrotherapy &ndash; Sauna, Steam Room &amp; Hydromassage</div>
+      </div>
+      <div class="t-price na">—</div>
+      <div class="t-price">$25</div>
+      <div class="t-price">$50</div>
+    </div>
+
+    <div class="t-row cols-3">
+      <div class="t-name">Fish Therapy</div>
+      <div class="t-price">$50</div>
+      <div class="t-price na">—</div>
+      <div class="t-price na">—</div>
+    </div>
+
+    <div class="t-row cols-3">
+      <div class="t-name">Chocolate Body Wrap</div>
+      <div class="t-price na">—</div>
+      <div class="t-price">$150</div>
+      <div class="t-price na">—</div>
+    </div>
+
+  </div>
+
+  <!-- FACIALS -->
+  <div class="section">
+    <div class="sec-head">
+      <div class="sec-head-left">
+        <span class="sec-name">Facials</span>
+        <span class="sec-tag">Skin Care</span>
+      </div>
+      <span class="sec-rule"></span>
+    </div>
+
+    <div class="t-head cols-3">
+      <span></span>
+      <span></span>
+      <span>50 min</span>
+      <span></span>
+    </div>
+
+    <div class="t-row cols-3">
+      <div>
+        <div class="t-name">Stress Relief</div>
+        <div class="t-sub">Sensitive skin</div>
+      </div>
+      <div class="t-price na"></div>
+      <div class="t-price">$125</div>
+      <div class="t-price na"></div>
+    </div>
+
+    <div class="t-row cols-3">
+      <div>
+        <div class="t-name">Revitalizer</div>
+        <div class="t-sub">Glow-up</div>
+      </div>
+      <div class="t-price na"></div>
+      <div class="t-price">$125</div>
+      <div class="t-price na"></div>
+    </div>
+
+    <div class="t-row cols-3">
+      <div>
+        <div class="t-name">Anti-Aging</div>
+        <div class="t-sub">Lumafirm®</div>
+      </div>
+      <div class="t-price na"></div>
+      <div class="t-price">$125</div>
+      <div class="t-price na"></div>
+    </div>
+
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div class="footer-note">
+      Reservations &amp; full menu<br>
+      Visit Dreams® Spa or dial
+    </div>
+    <div class="footer-ext">Ext. 7130 · 7131</div>
+  </div>
+
+</div>
+</body>
+</html>

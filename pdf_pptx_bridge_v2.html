@@ -1,0 +1,1649 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PDF→PPTX Bridge v2.0</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,300;0,500;0,700;1,300&family=Fira+Code:wght@300;400&display=swap');
+
+:root {
+  --bg:      #09090b;
+  --s1:      #111113;
+  --s2:      #18181b;
+  --s3:      #1f1f23;
+  --b1:      #27272a;
+  --b2:      #3f3f46;
+  --text:    #fafafa;
+  --dim:     #71717a;
+  --dim2:    #3f3f46;
+
+  /* Tab colors */
+  --c-link:   #60a5fa;  /* blue  */
+  --c-trans:  #fb923c;  /* amber */
+  --c-notes:  #a78bfa;  /* violet */
+  --c-log:    #34d399;  /* emerald */
+
+  --c-link-dim:  rgba(96,165,250,0.1);
+  --c-trans-dim: rgba(251,146,60,0.1);
+  --c-notes-dim: rgba(167,139,250,0.1);
+  --c-log-dim:   rgba(52,211,153,0.1);
+
+  --success: #34d399;
+  --err:     #f87171;
+  --warn:    #fbbf24;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: 'Archivo', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 14px;
+}
+
+/* ── Layout ─────────────────────────────────────────── */
+.app {
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  min-height: 100vh;
+}
+
+/* ── Header ─────────────────────────────────────────── */
+.header {
+  padding: 28px 32px 0;
+  border-bottom: 1px solid var(--b1);
+}
+
+.header-top {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.brand-icon {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--c-link), var(--c-notes));
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+}
+
+.brand-name {
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.brand-ver {
+  font-family: 'Fira Code', monospace;
+  font-size: 0.6rem;
+  color: var(--dim);
+  background: var(--s2);
+  border: 1px solid var(--b1);
+  padding: 2px 7px;
+  border-radius: 4px;
+  margin-left: 8px;
+}
+
+.header-sub {
+  font-size: 0.72rem;
+  color: var(--dim);
+  font-weight: 300;
+}
+
+/* File badge */
+.file-badge {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: var(--s2);
+  border: 1px solid var(--b1);
+  border-radius: 8px;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.65rem;
+  color: var(--dim);
+}
+.file-badge.on { display: flex; }
+.file-badge-name { color: var(--text); max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); flex-shrink: 0; box-shadow: 0 0 6px var(--success); }
+
+/* ── Tabs ───────────────────────────────────────────── */
+.tabs {
+  display: flex;
+  gap: 0;
+  margin-top: 0;
+}
+
+.tab {
+  padding: 12px 20px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--dim);
+  border-bottom: 2px solid transparent;
+  transition: all .15s;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+
+.tab:hover { color: var(--text); }
+
+.tab.active-link  { color: var(--c-link);  border-color: var(--c-link); }
+.tab.active-trans { color: var(--c-trans); border-color: var(--c-trans); }
+.tab.active-notes { color: var(--c-notes); border-color: var(--c-notes); }
+.tab.active-log   { color: var(--c-log);   border-color: var(--c-log); }
+
+.tab-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--dim2); flex-shrink: 0;
+  transition: all .15s;
+}
+.tab.done .tab-dot   { background: var(--success); box-shadow: 0 0 5px var(--success); }
+.tab.active-link  .tab-dot { background: var(--c-link); }
+.tab.active-trans .tab-dot { background: var(--c-trans); }
+.tab.active-notes .tab-dot { background: var(--c-notes); }
+.tab.active-log   .tab-dot { background: var(--c-log); }
+
+/* ── Shared upload ──────────────────────────────────── */
+.shared-upload {
+  padding: 20px 32px;
+  border-bottom: 1px solid var(--b1);
+  background: var(--s1);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.upload-label {
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--dim);
+  flex-shrink: 0;
+}
+
+.upload-slots {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.upload-slot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  background: var(--s2);
+  border: 1.5px dashed var(--b2);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all .15s;
+  font-size: 0.7rem;
+  color: var(--dim);
+}
+
+.upload-slot:hover { border-color: var(--text); color: var(--text); }
+.upload-slot.loaded { border-style: solid; border-color: var(--success); color: var(--success); }
+.upload-slot.loaded .slot-name { color: var(--text); }
+
+.slot-icon { font-size: 1rem; }
+.slot-info { display: flex; flex-direction: column; }
+.slot-label { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.08em; }
+.slot-name  { font-family: 'Fira Code', monospace; font-size: 0.65rem; display: none; }
+.loaded .slot-name { display: block; }
+.loaded .slot-label { font-size: 0.58rem; }
+
+input[type=file] { display: none; }
+
+/* ── Panel ──────────────────────────────────────────── */
+.panels { padding: 28px 32px; }
+.panel  { display: none; }
+.panel.on { display: block; }
+
+/* Section title */
+.sec {
+  font-size: 0.58rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--b1);
+}
+
+/* Note box */
+.notebox {
+  background: var(--s2);
+  border: 1px solid var(--b1);
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 0.68rem;
+  color: var(--dim);
+  line-height: 1.7;
+  margin-bottom: 20px;
+}
+.notebox strong { color: var(--text); }
+.notebox.link-nb  { border-left: 2px solid var(--c-link); }
+.notebox.trans-nb { border-left: 2px solid var(--c-trans); }
+.notebox.notes-nb { border-left: 2px solid var(--c-notes); }
+
+/* ── Link injector ──────────────────────────────────── */
+.link-opts {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 20px;
+}
+
+.opt-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--s2);
+  border: 1px solid var(--b1);
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background .1s;
+}
+.opt-row:first-child { border-radius: 7px 7px 0 0; }
+.opt-row:last-child  { border-radius: 0 0 7px 7px; }
+.opt-row:not(:last-child) { border-bottom-color: transparent; }
+.opt-row:hover { background: var(--s3); }
+.opt-row input[type=checkbox] { accent-color: var(--c-link); width:14px; height:14px; flex-shrink:0; cursor:pointer; }
+.opt-text { flex: 1; font-size: 0.75rem; }
+.opt-note { font-size: 0.62rem; color: var(--dim); display: block; margin-top: 1px; }
+.badge {
+  font-size: 0.58rem; padding: 2px 7px;
+  border-radius: 4px; white-space: nowrap;
+  font-family: 'Fira Code', monospace;
+}
+.badge-blue   { background: var(--c-link-dim);  color: var(--c-link);  border: 1px solid rgba(96,165,250,.25); }
+.badge-green  { background: var(--c-log-dim);   color: var(--c-log);   border: 1px solid rgba(52,211,153,.25); }
+.badge-violet { background: var(--c-notes-dim); color: var(--c-notes); border: 1px solid rgba(167,139,250,.25); }
+.badge-amber  { background: var(--c-trans-dim); color: var(--c-trans); border: 1px solid rgba(251,146,60,.25); }
+.badge-gray   { background: var(--s3); color: var(--dim); border: 1px solid var(--b1); }
+
+/* Link preview table */
+.link-preview {
+  display: none;
+  margin-bottom: 20px;
+  border: 1px solid var(--b1);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.link-preview.on { display: block; }
+.lp-head {
+  padding: 8px 14px;
+  background: var(--s2);
+  border-bottom: 1px solid var(--b1);
+  font-size: 0.6rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--dim);
+  display: flex;
+  justify-content: space-between;
+}
+.lp-table {
+  width: 100%; border-collapse: collapse;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.63rem; display: block;
+  max-height: 200px; overflow-y: auto;
+}
+.lp-table th {
+  padding: 6px 12px; text-align: left;
+  color: var(--dim); border-bottom: 1px solid var(--b1);
+  position: sticky; top: 0; background: var(--s1);
+  letter-spacing: .06em;
+}
+.lp-table td {
+  padding: 5px 12px;
+  border-bottom: 1px solid rgba(39,39,42,.5);
+  max-width: 260px; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap;
+}
+.lp-table tr:last-child td { border-bottom: none; }
+
+/* ── Transitions ─────────────────────────────────────── */
+.rules-list { margin-bottom: 12px; }
+
+.rule-card {
+  background: var(--s2);
+  border: 1px solid var(--b1);
+  border-radius: 8px;
+  margin-bottom: 6px;
+  overflow: hidden;
+}
+
+.rule-head {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px;
+  background: var(--s3);
+  border-bottom: 1px solid var(--b1);
+}
+.rule-n { font-family:'Fira Code',monospace; font-size:.6rem; color:var(--dim); min-width:24px; }
+.rule-desc { font-size:.72rem; flex:1; }
+.btn-rm {
+  background:none; border:none; color:var(--dim2);
+  cursor:pointer; font-size:.7rem; padding:2px 6px;
+  border-radius:4px; font-family:'Fira Code',monospace;
+  transition:all .15s;
+}
+.btn-rm:hover { color:var(--err); background:rgba(248,113,113,.1); }
+
+.rule-body {
+  padding: 12px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 10px;
+}
+@media(max-width:560px){ .rule-body{ grid-template-columns:1fr 1fr; } }
+
+.field label {
+  display: block; font-size: .58rem;
+  letter-spacing: .08em; text-transform: uppercase;
+  color: var(--dim); margin-bottom: 5px;
+}
+.field input[type=number],
+.field select {
+  width: 100%;
+  background: var(--s3); border: 1px solid var(--b1);
+  color: var(--text); border-radius: 6px;
+  padding: 7px 10px;
+  font-family: 'Fira Code', monospace;
+  font-size: .75rem; outline: none;
+  transition: border-color .15s;
+}
+.field input:focus, .field select:focus { border-color: var(--c-trans); }
+.field select option { background: var(--s2); }
+
+.slide-map-wrap { margin-bottom: 16px; }
+.slide-map-label { font-size:.58rem; letter-spacing:.08em; text-transform:uppercase; color:var(--dim); margin-bottom:6px; }
+.slide-map { display:flex; flex-wrap:wrap; gap:2px; }
+.sdot { width:8px; height:8px; border-radius:2px; background:var(--b1); flex-shrink:0; transition:background .1s; }
+.sdot.on { background: var(--c-trans); }
+
+.btn-add-rule {
+  width: 100%; padding: 11px;
+  background: transparent;
+  border: 1.5px dashed var(--b2);
+  border-radius: 8px; color: var(--dim);
+  font-family: 'Fira Code', monospace; font-size: .72rem;
+  cursor: pointer; transition: all .2s; margin-bottom: 20px;
+}
+.btn-add-rule:hover { border-color: var(--c-trans); color: var(--c-trans); background: var(--c-trans-dim); }
+
+/* Presets */
+.preset-row {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  margin-bottom: 20px; align-items: center;
+}
+.preset-label { font-size:.6rem; text-transform:uppercase; letter-spacing:.1em; color:var(--dim); flex-shrink:0; }
+.btn-preset {
+  padding: 5px 12px; background: var(--s2);
+  border: 1px solid var(--b1); border-radius: 6px;
+  color: var(--dim); font-family:'Fira Code',monospace;
+  font-size:.65rem; cursor:pointer; transition:all .15s;
+}
+.btn-preset:hover { border-color:var(--c-trans); color:var(--c-trans); }
+.btn-save-preset {
+  padding: 5px 12px; background: transparent;
+  border: 1px dashed var(--b2); border-radius: 6px;
+  color: var(--dim); font-family:'Fira Code',monospace;
+  font-size:.65rem; cursor:pointer; transition:all .15s;
+}
+.btn-save-preset:hover { border-color:var(--c-log); color:var(--c-log); }
+
+/* Summary */
+.summary {
+  background: var(--s2); border: 1px solid var(--b1);
+  border-radius: 8px; padding: 14px 16px;
+  margin-bottom: 20px; display: none;
+}
+.summary.on { display: block; }
+.summary-title { font-size:.58rem; letter-spacing:.1em; text-transform:uppercase; color:var(--dim); margin-bottom:10px; }
+.sum-row { display:flex; justify-content:space-between; font-size:.68rem; padding:4px 0; border-bottom:1px solid var(--b1); }
+.sum-row:last-child { border-bottom:none; }
+.sum-l { color:var(--dim); }
+.sum-v { color:var(--c-trans); font-family:'Fira Code',monospace; }
+
+/* ── Notes ───────────────────────────────────────────── */
+.notes-list { margin-bottom: 20px; }
+
+.note-card {
+  background: var(--s2); border: 1px solid var(--b1);
+  border-radius: 8px; margin-bottom: 6px; overflow: hidden;
+}
+.note-head {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 12px; background: var(--s3);
+  border-bottom: 1px solid var(--b1);
+}
+.note-slide-label { font-size:.6rem; letter-spacing:.08em; text-transform:uppercase; color:var(--dim); }
+.note-body { padding: 12px; display: grid; grid-template-columns: 120px 1fr; gap: 10px; align-items: start; }
+@media(max-width:480px){ .note-body{ grid-template-columns:1fr; } }
+.note-body textarea {
+  width: 100%; background: var(--s3);
+  border: 1px solid var(--b1); border-radius: 6px;
+  color: var(--text); padding: 8px 10px;
+  font-family: 'Fira Code', monospace; font-size:.7rem;
+  resize: vertical; min-height: 70px; outline: none;
+  transition: border-color .15s; line-height: 1.5;
+}
+.note-body textarea:focus { border-color: var(--c-notes); }
+
+.btn-add-note {
+  width: 100%; padding: 11px; background: transparent;
+  border: 1.5px dashed var(--b2); border-radius: 8px;
+  color: var(--dim); font-family:'Fira Code',monospace;
+  font-size:.72rem; cursor:pointer; transition:all .2s;
+  margin-bottom: 20px;
+}
+.btn-add-note:hover { border-color:var(--c-notes); color:var(--c-notes); background:var(--c-notes-dim); }
+
+/* ── Log ─────────────────────────────────────────────── */
+.log-entries {
+  background: var(--s2); border: 1px solid var(--b1);
+  border-radius: 8px; overflow: hidden;
+  margin-bottom: 20px;
+}
+.log-empty {
+  padding: 32px; text-align: center;
+  font-size: .72rem; color: var(--dim);
+}
+.log-entry {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--b1);
+  animation: fi .2s ease;
+}
+.log-entry:last-child { border-bottom: none; }
+.log-entry-head {
+  display: flex; justify-content: space-between;
+  align-items: baseline; margin-bottom: 6px; flex-wrap: wrap; gap: 6px;
+}
+.log-entry-action {
+  font-size: .75rem; font-weight: 500;
+  display: flex; align-items: center; gap: 8px;
+}
+.log-entry-time {
+  font-family: 'Fira Code', monospace;
+  font-size: .6rem; color: var(--dim);
+}
+.log-entry-detail {
+  font-family: 'Fira Code', monospace;
+  font-size: .62rem; color: var(--dim); line-height: 1.6;
+}
+.log-action-badge {
+  font-size: .58rem; padding: 2px 7px;
+  border-radius: 4px; font-family:'Fira Code',monospace;
+}
+
+/* ── Process button ──────────────────────────────────── */
+.btn-process {
+  width: 100%; padding: 14px;
+  border: none; border-radius: 8px;
+  font-family: 'Archivo', sans-serif;
+  font-size: .88rem; font-weight: 500;
+  cursor: pointer; transition: all .2s;
+  margin-bottom: 20px; letter-spacing: .01em;
+}
+.btn-link  { background: var(--c-link);  color: #0f172a; }
+.btn-trans { background: var(--c-trans); color: #0f172a; }
+.btn-notes { background: var(--c-notes); color: #0f172a; }
+.btn-log   { background: var(--c-log);   color: #0f172a; }
+.btn-process:hover:not(:disabled) { filter:brightness(1.1); transform:translateY(-1px); box-shadow:0 6px 20px rgba(0,0,0,.4); }
+.btn-process:disabled { opacity:.3; cursor:not-allowed; transform:none; filter:none; }
+
+/* ── Progress ─────────────────────────────────────────── */
+.prog { display:none; margin-bottom:20px; }
+.prog.on { display:block; }
+.prog-top { display:flex; justify-content:space-between; font-size:.62rem; color:var(--dim); margin-bottom:5px; }
+.prog-track { height:2px; background:var(--b1); border-radius:1px; overflow:hidden; margin-bottom:12px; }
+.prog-fill { height:100%; width:0%; border-radius:1px; transition:width .3s ease; }
+.pf-link  { background:var(--c-link); }
+.pf-trans { background:var(--c-trans); }
+.pf-notes { background:var(--c-notes); }
+.logbox {
+  background:var(--s2); border:1px solid var(--b1);
+  border-radius:7px; padding:10px 12px;
+  font-family:'Fira Code',monospace; font-size:.62rem;
+  max-height:120px; overflow-y:auto;
+  display:flex; flex-direction:column; gap:3px;
+}
+.ll { display:flex; gap:8px; line-height:1.5; animation:fi .15s; }
+@keyframes fi { from{opacity:0}to{opacity:1} }
+.ll.ok   .ld { color:var(--success); }
+.ll.warn .ld { color:var(--warn); }
+.ll.err  .ld { color:var(--err); }
+.ll.dim  .ld { color:var(--dim); }
+.ll.info .ld { color:var(--c-link); }
+
+/* ── Result ───────────────────────────────────────────── */
+.result-box {
+  display: none; border: 1px solid var(--success);
+  border-radius: 8px; padding: 20px;
+  background: var(--c-log-dim); text-align: center;
+}
+.result-box.on { display: block; }
+.result-title { font-size:1rem; font-weight:700; margin-bottom:4px; }
+.result-sub { font-family:'Fira Code',monospace; font-size:.62rem; color:var(--dim); margin-bottom:16px; }
+.result-stats { display:flex; justify-content:center; gap:24px; flex-wrap:wrap; margin-bottom:18px; }
+.stat-n { font-size:1.5rem; font-weight:700; color:var(--success); display:block; line-height:1; }
+.stat-l { font-size:.55rem; letter-spacing:.08em; text-transform:uppercase; color:var(--dim); margin-top:2px; display:block; }
+.btn-dl {
+  display:inline-flex; align-items:center; gap:7px;
+  padding:10px 22px; background:var(--success); color:var(--bg);
+  border:none; border-radius:7px;
+  font-family:'Fira Code',monospace; font-size:.72rem;
+  cursor:pointer; transition:all .2s; margin-bottom:6px;
+}
+.btn-dl:hover { filter:brightness(1.1); }
+.btn-reset {
+  display:block; margin:7px auto 0; padding:6px 14px;
+  background:transparent; border:1px solid var(--b2);
+  border-radius:6px; color:var(--dim);
+  font-family:'Fira Code',monospace; font-size:.62rem;
+  cursor:pointer; transition:all .2s;
+}
+.btn-reset:hover { border-color:var(--text); color:var(--text); }
+
+::-webkit-scrollbar { width:4px; }
+::-webkit-scrollbar-track { background:var(--s2); }
+::-webkit-scrollbar-thumb { background:var(--b2); border-radius:2px; }
+
+.spin {
+  display:inline-block; width:11px; height:11px;
+  border:1.5px solid rgba(15,15,15,.3);
+  border-top-color:rgba(15,15,15,.8);
+  border-radius:50%; animation:sp .6s linear infinite;
+  vertical-align:middle; margin-right:6px;
+}
+@keyframes sp { to{transform:rotate(360deg)} }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ── Header ─────────────────────────────────────── -->
+  <div class="header">
+    <div class="header-top">
+      <div class="brand">
+        <div class="brand-icon">🌉</div>
+        <div>
+          <div class="brand-name">PDF→PPTX Bridge <span class="brand-ver">v2.0</span></div>
+          <div class="header-sub">Dreams Riviera · VIP Services · Quick Offer Studio</div>
+        </div>
+      </div>
+      <div class="file-badge" id="fileBadge">
+        <div class="file-badge-dot"></div>
+        <span>PPTX:</span>
+        <span class="file-badge-name" id="fileBadgeName"></span>
+        <span id="fileBadgeSlides" style="color:var(--dim)"></span>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active-link" id="tab-link" onclick="switchTab('link')">
+        <div class="tab-dot"></div>
+        🔗 Link Injector
+      </div>
+      <div class="tab" id="tab-trans" onclick="switchTab('trans')">
+        <div class="tab-dot"></div>
+        ⏱ Transitions
+      </div>
+      <div class="tab" id="tab-notes" onclick="switchTab('notes')">
+        <div class="tab-dot"></div>
+        📝 Slide Notes
+      </div>
+      <div class="tab" id="tab-log" onclick="switchTab('log')">
+        <div class="tab-dot"></div>
+        📋 Change Log
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Shared upload bar ──────────────────────────── -->
+  <div class="shared-upload">
+    <span class="upload-label">Archivos</span>
+    <div class="upload-slots">
+
+      <div class="upload-slot" id="slot-pptx" onclick="document.getElementById('fi-pptx').click()">
+        <span class="slot-icon">📊</span>
+        <div class="slot-info">
+          <span class="slot-label">PPTX de Canva</span>
+          <span class="slot-name" id="slotPptxName"></span>
+        </div>
+      </div>
+
+      <div class="upload-slot" id="slot-pdf" onclick="document.getElementById('fi-pdf').click()">
+        <span class="slot-icon">📄</span>
+        <div class="slot-info">
+          <span class="slot-label">PDF (solo Link Injector)</span>
+          <span class="slot-name" id="slotPdfName"></span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <input type="file" id="fi-pptx" accept=".pptx">
+  <input type="file" id="fi-pdf"  accept=".pdf">
+
+  <!-- ── Panels ─────────────────────────────────────── -->
+  <div class="panels">
+
+    <!-- ══ LINK INJECTOR ══════════════════════════════ -->
+    <div class="panel on" id="panel-link">
+
+      <div class="notebox link-nb">
+        <strong>Cómo funciona:</strong> sube el PDF (que tiene los links) y el PPTX (sin links). 
+        La herramienta extrae las anotaciones de link del PDF con sus coordenadas exactas 
+        e inyecta shapes invisibles en el PPTX. <strong>El último slide de cada rango de fotos 
+        NO debe tener auto-advance</strong> — se queda ahí hasta que hagas click.
+      </div>
+
+      <div class="sec">// Opciones de extracción</div>
+      <div class="link-opts" style="margin-bottom:20px;">
+        <label class="opt-row">
+          <input type="checkbox" id="lk-internal" checked>
+          <span class="opt-text">
+            Links internos — saltos entre slides
+            <span class="opt-note">anotaciones GoTo dentro del PDF</span>
+          </span>
+          <span class="badge badge-green">interno</span>
+        </label>
+        <label class="opt-row">
+          <input type="checkbox" id="lk-external" checked>
+          <span class="opt-text">
+            Links externos — URLs, videos, Google Maps
+            <span class="opt-note">anotaciones URI dentro del PDF</span>
+          </span>
+          <span class="badge badge-blue">externo</span>
+        </label>
+        <label class="opt-row">
+          <input type="checkbox" id="lk-preview">
+          <span class="opt-text">
+            Mostrar preview de links antes de inyectar
+            <span class="opt-note">útil para verificar que todo está correcto</span>
+          </span>
+          <span class="badge badge-gray">debug</span>
+        </label>
+      </div>
+
+      <!-- Link preview -->
+      <div class="link-preview" id="linkPreview">
+        <div class="lp-head">
+          <span>Links detectados en el PDF</span>
+          <span id="lpCount" style="color:var(--c-link);font-family:'Fira Code',monospace;"></span>
+        </div>
+        <table class="lp-table">
+          <thead><tr>
+            <th>Slide</th><th>Tipo</th><th>Destino</th><th>Posición</th>
+          </tr></thead>
+          <tbody id="lpBody"></tbody>
+        </table>
+        <div style="padding:8px 14px; border-top:1px solid var(--b1); text-align:right;">
+          <button onclick="runLinkInjection()" style="padding:6px 16px;background:var(--c-link);color:#0f172a;border:none;border-radius:6px;font-family:'Fira Code',monospace;font-size:.7rem;cursor:pointer;">
+            Confirmar e inyectar →
+          </button>
+        </div>
+      </div>
+
+      <button class="btn-process btn-link" id="btn-link" disabled onclick="handleLinkBtn()">
+        Extraer links e inyectar en PPTX →
+      </button>
+
+      <div class="prog" id="prog-link">
+        <div class="prog-top"><span id="pl-label">Procesando...</span><span id="pl-pct">0%</span></div>
+        <div class="prog-track"><div class="prog-fill pf-link" id="pl-fill"></div></div>
+        <div class="logbox" id="log-link"></div>
+      </div>
+
+      <div class="result-box" id="res-link">
+        <div class="result-title">✓ Links inyectados</div>
+        <div class="result-sub" id="res-link-sub"></div>
+        <div class="result-stats" id="res-link-stats"></div>
+        <button class="btn-dl" id="btn-dl-link">⬇ Descargar PPTX con links</button>
+        <button class="btn-reset" onclick="resetResult('link')">↩ Procesar otro</button>
+      </div>
+    </div>
+
+    <!-- ══ TRANSITIONS ════════════════════════════════ -->
+    <div class="panel" id="panel-trans">
+
+      <div class="notebox trans-nb">
+        <strong>Nota importante sobre rangos:</strong> el <strong>último slide del rango avanza automáticamente al siguiente.</strong>
+        Si quieres que el slide 10 sea el punto de parada, pon el rango hasta el <strong>9</strong>.
+        El slide 10 queda sin regla → espera click → no avanza solo.
+      </div>
+
+      <!-- Presets -->
+      <div class="sec">// Presets guardados</div>
+      <div class="preset-row">
+        <span class="preset-label">Cargar:</span>
+        <div id="presetBtns"></div>
+        <button class="btn-save-preset" onclick="savePreset()">+ Guardar preset actual</button>
+      </div>
+
+      <!-- Offset corrector -->
+      <div class="sec">// Corrector de offset</div>
+      <div class="notebox trans-nb" style="margin-bottom:12px;">
+        ¿Insertaste slides nuevos en medio de la presentación? Define dónde y cuántos — 
+        la herramienta recorre automáticamente los rangos que quedan después de esa posición.
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr auto; gap:10px; align-items:end; margin-bottom:10px;">
+        <div class="field">
+          <label>Después del slide #</label>
+          <input type="number" id="offsetAfter" min="1" placeholder="ej. 123"
+            style="width:100%;background:var(--s3);border:1px solid var(--b1);color:var(--text);border-radius:6px;padding:8px 10px;font-family:'Fira Code',monospace;font-size:.75rem;outline:none;">
+        </div>
+        <div class="field">
+          <label>Slides insertados</label>
+          <input type="number" id="offsetCount" min="1" placeholder="ej. 13"
+            style="width:100%;background:var(--s3);border:1px solid var(--b1);color:var(--text);border-radius:6px;padding:8px 10px;font-family:'Fira Code',monospace;font-size:.75rem;outline:none;">
+        </div>
+        <button onclick="applyOffset()"
+          style="padding:8px 16px;background:var(--c-trans);color:#0f172a;border:none;border-radius:6px;font-family:'Fira Code',monospace;font-size:.72rem;cursor:pointer;white-space:nowrap;transition:all .2s;"
+          onmouseover="this.style.filter='brightness(1.1)'" onmouseout="this.style.filter=''">
+          Aplicar →
+        </button>
+      </div>
+
+      <!-- Offset preview -->
+      <div id="offsetPreview" style="display:none; margin-bottom:20px; border:1px solid var(--b1); border-radius:8px; overflow:hidden;">
+        <div style="padding:8px 14px; background:var(--s3); border-bottom:1px solid var(--b1); font-size:.6rem; letter-spacing:.1em; text-transform:uppercase; color:var(--dim); display:flex; justify-content:space-between;">
+          <span>Vista previa del ajuste</span>
+          <span id="offsetSummary" style="color:var(--c-trans);font-family:'Fira Code',monospace;"></span>
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-family:'Fira Code',monospace;font-size:.65rem;">
+          <thead>
+            <tr>
+              <th style="padding:6px 14px;text-align:left;color:var(--dim);border-bottom:1px solid var(--b1);">Rango</th>
+              <th style="padding:6px 14px;text-align:center;color:var(--dim);border-bottom:1px solid var(--b1);">Antes</th>
+              <th style="padding:6px 14px;text-align:center;color:var(--dim);border-bottom:1px solid var(--b1);">Después</th>
+              <th style="padding:6px 14px;text-align:center;color:var(--dim);border-bottom:1px solid var(--b1);">Estado</th>
+            </tr>
+          </thead>
+          <tbody id="offsetTable"></tbody>
+        </table>
+        <div style="padding:10px 14px; border-top:1px solid var(--b1); display:flex; gap:8px; justify-content:flex-end;">
+          <button onclick="cancelOffset()"
+            style="padding:6px 14px;background:transparent;border:1px solid var(--b2);border-radius:5px;color:var(--dim);font-family:'Fira Code',monospace;font-size:.68rem;cursor:pointer;">
+            Cancelar
+          </button>
+          <button onclick="confirmOffset()"
+            style="padding:6px 16px;background:var(--c-trans);color:#0f172a;border:none;border-radius:5px;font-family:'Fira Code',monospace;font-size:.68rem;cursor:pointer;font-weight:500;">
+            Confirmar y aplicar ✓
+          </button>
+        </div>
+      </div>
+
+      <!-- Slide map -->
+      <div class="slide-map-wrap" id="smWrap" style="display:none;">
+        <div class="slide-map-label">
+          Mapa · <span style="color:var(--c-trans)">■</span> auto-advance
+          · <span style="color:var(--b1)">■</span> click manual
+        </div>
+        <div class="slide-map" id="slideMap"></div>
+      </div>
+
+      <div class="sec">// Rangos de transición</div>
+      <div class="rules-list" id="rulesList"></div>
+      <button class="btn-add-rule" onclick="addRule()">+ Agregar rango</button>
+
+      <!-- Summary -->
+      <div class="summary" id="transSummary">
+        <div class="summary-title">Resumen de cambios</div>
+        <div id="sumRows"></div>
+      </div>
+
+      <button class="btn-process btn-trans" id="btn-trans" disabled onclick="runTransitions()">
+        Inyectar transiciones →
+      </button>
+
+      <div class="prog" id="prog-trans">
+        <div class="prog-top"><span id="pt-label">Procesando...</span><span id="pt-pct">0%</span></div>
+        <div class="prog-track"><div class="prog-fill pf-trans" id="pt-fill"></div></div>
+        <div class="logbox" id="log-trans"></div>
+      </div>
+
+      <div class="result-box" id="res-trans">
+        <div class="result-title">✓ Transiciones inyectadas</div>
+        <div class="result-sub" id="res-trans-sub"></div>
+        <div class="result-stats" id="res-trans-stats"></div>
+        <button class="btn-dl" id="btn-dl-trans">⬇ Descargar PPTX</button>
+        <button class="btn-reset" onclick="resetResult('trans')">↩ Procesar otro</button>
+      </div>
+    </div>
+
+    <!-- ══ SLIDE NOTES ════════════════════════════════ -->
+    <div class="panel" id="panel-notes">
+
+      <div class="notebox notes-nb">
+        <strong>Slide Notes</strong> agrega texto en la vista de presentador (abajo en PowerPoint 
+        cuando usas dos pantallas). El huésped <strong>nunca lo ve</strong> — solo tú. 
+        Úsalo para recordatorios: "pregunta aquí si tienen tarjeta", "mencionar el precio especial", etc.
+      </div>
+
+      <div class="sec">// Notas por slide</div>
+      <div class="notes-list" id="notesList"></div>
+      <button class="btn-add-note" onclick="addNote()">+ Agregar nota para un slide</button>
+
+      <button class="btn-process btn-notes" id="btn-notes" disabled onclick="runNotes()">
+        Inyectar notas en PPTX →
+      </button>
+
+      <div class="prog" id="prog-notes">
+        <div class="prog-top"><span id="pn-label">Procesando...</span><span id="pn-pct">0%</span></div>
+        <div class="prog-track"><div class="prog-fill pf-notes" id="pn-fill"></div></div>
+        <div class="logbox" id="log-notes"></div>
+      </div>
+
+      <div class="result-box" id="res-notes">
+        <div class="result-title">✓ Notas inyectadas</div>
+        <div class="result-sub" id="res-notes-sub"></div>
+        <div class="result-stats" id="res-notes-stats"></div>
+        <button class="btn-dl" id="btn-dl-notes">⬇ Descargar PPTX con notas</button>
+        <button class="btn-reset" onclick="resetResult('notes')">↩ Procesar otro</button>
+      </div>
+    </div>
+
+    <!-- ══ CHANGE LOG ═════════════════════════════════ -->
+    <div class="panel" id="panel-log">
+
+      <div class="sec">// Historial de operaciones esta sesión</div>
+
+      <div class="log-entries" id="logEntries">
+        <div class="log-empty" id="logEmpty">No hay operaciones registradas aún. Cada vez que proceses un archivo aquí aparecerá el registro.</div>
+      </div>
+
+      <button class="btn-process btn-log" onclick="exportLog()" style="margin-bottom:0;">
+        ⬇ Exportar log como TXT
+      </button>
+    </div>
+
+  </div><!-- /panels -->
+</div><!-- /app -->
+
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+// ═══════════════════════════════════════════════════════
+// GLOBAL STATE
+// ═══════════════════════════════════════════════════════
+const state = {
+  pptxFile:   null,
+  pdfFile:    null,
+  numSlides:  0,
+  pdfDoc:     null,
+  extractedLinks: [],
+  changeLog:  [],
+  presets:    JSON.parse(localStorage.getItem('bridge_presets') || '[]'),
+  blobs:      { link: null, trans: null, notes: null },
+};
+
+let ruleCount = 0;
+let noteCount = 0;
+let currentTab = 'link';
+
+// ═══════════════════════════════════════════════════════
+// TAB SWITCHING
+// ═══════════════════════════════════════════════════════
+function switchTab(tab) {
+  currentTab = tab;
+  ['link','trans','notes','log'].forEach(t => {
+    document.getElementById(`tab-${t}`).className =
+      'tab' + (t === tab ? ` active-${t}` : '') +
+      (state.blobs[t] ? ' done' : '');
+    document.getElementById(`panel-${t}`).classList.toggle('on', t === tab);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// FILE LOADING
+// ═══════════════════════════════════════════════════════
+document.getElementById('fi-pptx').addEventListener('change', e => {
+  if (e.target.files[0]) loadPptx(e.target.files[0]);
+});
+document.getElementById('fi-pdf').addEventListener('change', e => {
+  if (e.target.files[0]) loadPdf(e.target.files[0]);
+});
+
+document.getElementById('slot-pptx').addEventListener('dragover', e => { e.preventDefault(); });
+document.getElementById('slot-pptx').addEventListener('drop', e => {
+  e.preventDefault();
+  const f = e.dataTransfer.files[0];
+  if (f?.name.endsWith('.pptx')) loadPptx(f);
+});
+document.getElementById('slot-pdf').addEventListener('dragover', e => { e.preventDefault(); });
+document.getElementById('slot-pdf').addEventListener('drop', e => {
+  e.preventDefault();
+  const f = e.dataTransfer.files[0];
+  if (f?.name.endsWith('.pdf')) loadPdf(f);
+});
+
+async function loadPptx(f) {
+  state.pptxFile = f;
+  const buf = await f.arrayBuffer();
+  const zip = await JSZip.loadAsync(buf);
+  state.numSlides = Object.keys(zip.files)
+    .filter(k => /^ppt\/slides\/slide\d+\.xml$/.test(k)).length;
+
+  document.getElementById('slot-pptx').classList.add('loaded');
+  document.getElementById('slotPptxName').textContent =
+    f.name.length > 24 ? f.name.substring(0,22)+'…' : f.name;
+
+  document.getElementById('fileBadge').classList.add('on');
+  document.getElementById('fileBadgeName').textContent = f.name.length > 28 ? f.name.substring(0,26)+'…' : f.name;
+  document.getElementById('fileBadgeSlides').textContent = `· ${state.numSlides} slides`;
+
+  // Enable buttons
+  document.getElementById('btn-trans').disabled = false;
+  document.getElementById('btn-notes').disabled = false;
+
+  // Render slide map
+  if (state.numSlides > 0) {
+    document.getElementById('smWrap').style.display = 'block';
+    renderSlideMap();
+  }
+
+  checkLinkBtn();
+}
+
+async function loadPdf(f) {
+  state.pdfFile = f;
+  document.getElementById('slot-pdf').classList.add('loaded');
+  document.getElementById('slotPdfName').textContent =
+    f.name.length > 24 ? f.name.substring(0,22)+'…' : f.name;
+
+  const buf = await f.arrayBuffer();
+  state.pdfDoc = await pdfjsLib.getDocument({ data: buf }).promise;
+  checkLinkBtn();
+}
+
+function checkLinkBtn() {
+  document.getElementById('btn-link').disabled = !(state.pptxFile && state.pdfFile);
+}
+
+// ═══════════════════════════════════════════════════════
+// LINK INJECTOR
+// ═══════════════════════════════════════════════════════
+async function handleLinkBtn() {
+  if (document.getElementById('lk-preview').checked) {
+    await extractLinks();
+    showLinkPreview();
+  } else {
+    await extractLinks();
+    await runLinkInjection();
+  }
+}
+
+async function extractLinks() {
+  const doInt = document.getElementById('lk-internal').checked;
+  const doExt = document.getElementById('lk-external').checked;
+  state.extractedLinks = [];
+
+  document.getElementById('prog-link').classList.add('on');
+  const total = state.pdfDoc.numPages;
+
+  for (let p = 1; p <= total; p++) {
+    setProg('link', (p/total)*60, `Analizando página ${p}/${total}...`);
+    const page = await state.pdfDoc.getPage(p);
+    const vp   = page.getViewport({ scale:1 });
+    const anns = await page.getAnnotations();
+
+    for (const ann of anns) {
+      if (ann.subtype !== 'Link') continue;
+      const [x1,y1,x2,y2] = ann.rect;
+      const fx = x1/vp.width, fy = 1-(y2/vp.height);
+      const fw = Math.abs(x2-x1)/vp.width, fh = Math.abs(y2-y1)/vp.height;
+      if (fw<0.0001||fh<0.0001) continue;
+
+      if ((ann.url||ann.unsafeUrl) && doExt) {
+        state.extractedLinks.push({ slide:p, type:'external', url:ann.url||ann.unsafeUrl, fx,fy,fw,fh });
+      } else if (ann.dest && doInt) {
+        try {
+          let dest = ann.dest;
+          if (typeof dest==='string') dest = await state.pdfDoc.getDestination(dest);
+          if (dest?.[0]) {
+            const tp = await state.pdfDoc.getPageIndex(dest[0]) + 1;
+            state.extractedLinks.push({ slide:p, type:'internal', destSlide:tp, fx,fy,fw,fh });
+          }
+        } catch(e) {}
+      }
+    }
+    if (p%5===0) await tick();
+  }
+  logMsg('link', `Links extraídos: ${state.extractedLinks.length}`, 'ok');
+}
+
+function showLinkPreview() {
+  const tbody = document.getElementById('lpBody');
+  tbody.innerHTML = '';
+  state.extractedLinks.slice(0,60).forEach(l => {
+    const tr = document.createElement('tr');
+    const dest = l.type==='internal'
+      ? `<span style="color:var(--c-log)">→ slide ${l.destSlide}</span>`
+      : `<span style="color:var(--c-link)" title="${l.url}">${l.url.substring(0,45)}${l.url.length>45?'…':''}</span>`;
+    tr.innerHTML = `<td>${l.slide}</td><td><span class="badge ${l.type==='internal'?'badge-green':'badge-blue'}">${l.type}</span></td><td>${dest}</td><td style="color:var(--dim)">${l.fx.toFixed(2)},${l.fy.toFixed(2)}</td>`;
+    tbody.appendChild(tr);
+  });
+  document.getElementById('lpCount').textContent = `${state.extractedLinks.length} total`;
+  document.getElementById('linkPreview').classList.add('on');
+}
+
+async function runLinkInjection() {
+  document.getElementById('linkPreview').classList.remove('on');
+  document.getElementById('btn-link').disabled = true;
+  document.getElementById('btn-link').innerHTML = '<span class="spin"></span>Inyectando...';
+
+  const links = state.extractedLinks;
+  if (!links.length) { logMsg('link','No se encontraron links','warn'); return; }
+
+  const buf = await state.pptxFile.arrayBuffer();
+  const zip = await JSZip.loadAsync(buf);
+  setProg('link', 65, 'Cargando PPTX...');
+
+  const presXml = await zip.file('ppt/presentation.xml')?.async('text')||'';
+  const dm = presXml.match(/cx="(\d+)"[^>]*cy="(\d+)"/);
+  const W = dm ? parseInt(dm[1]) : 9144000;
+  const H = dm ? parseInt(dm[2]) : 6858000;
+
+  const slideFiles = Object.keys(zip.files)
+    .filter(f=>/^ppt\/slides\/slide\d+\.xml$/.test(f))
+    .sort((a,b)=>parseInt(a.match(/\d+/)[0])-parseInt(b.match(/\d+/)[0]));
+  const numSlides = slideFiles.length;
+
+  const bySlide = {};
+  links.forEach(l => { if(!bySlide[l.slide]) bySlide[l.slide]=[]; bySlide[l.slide].push(l); });
+
+  let injected=0, intC=0, extC=0;
+
+  for (let i=0; i<slideFiles.length; i++) {
+    const sf = slideFiles[i];
+    const sn = i+1;
+    const lks = bySlide[sn]||[];
+    if (!lks.length) continue;
+    setProg('link', 65+(i/numSlides)*30, `Slide ${sn}/${numSlides}...`);
+
+    let xml = await zip.file(sf).async('text');
+    const base = sf.split('/').pop().replace('.xml','');
+    const rp = `ppt/slides/_rels/${base}.xml.rels`;
+    let rels = await zip.file(rp)?.async('text')||'';
+    let maxRId = Math.max(0,...[...rels.matchAll(/Id="rId(\d+)"/g)].map(m=>parseInt(m[1])));
+
+    const newRels=[], newShapes=[];
+    for (const lk of lks) {
+      const x=Math.round(lk.fx*W), y=Math.round(lk.fy*H);
+      const cx=Math.max(50000,Math.round(lk.fw*W)), cy=Math.max(50000,Math.round(lk.fh*H));
+      if (cx<5000||cy<5000) continue;
+      maxRId++;
+      const rId=`rId${maxRId}`;
+      if (lk.type==='external'&&lk.url) {
+        newRels.push(`<Relationship Id="${rId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink" Target="${escXml(lk.url)}" TargetMode="External"/>`);
+        newShapes.push(buildLinkShape(8000+injected,rId,x,y,cx,cy,'external'));
+        extC++;
+      } else if (lk.type==='internal'&&lk.destSlide&&lk.destSlide<=numSlides) {
+        newRels.push(`<Relationship Id="${rId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide" Target="slide${lk.destSlide}.xml"/>`);
+        newShapes.push(buildLinkShape(8000+injected,rId,x,y,cx,cy,'internal'));
+        intC++;
+      } else continue;
+      injected++;
+    }
+
+    if (!newShapes.length) continue;
+    xml = xml.includes('</p:spTree>') ? xml.replace('</p:spTree>', newShapes.join('\n')+'\n</p:spTree>') : xml;
+    rels = rels.includes('</Relationships>') ? rels.replace('</Relationships>','  '+newRels.join('\n  ')+'\n</Relationships>') : `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">\n  ${newRels.join('\n  ')}\n</Relationships>`;
+    zip.file(sf, xml);
+    zip.file(rp, rels);
+    if (i%10===0) await tick();
+  }
+
+  setProg('link',96,'Comprimiendo...');
+  const blob = await zip.generateAsync({ type:'blob', mimeType:'application/vnd.openxmlformats-officedocument.presentationml.presentation', compression:'DEFLATE', compressionOptions:{level:6} });
+  state.blobs.link = blob;
+  setProg('link',100,'¡Listo!');
+  logMsg('link',`Inyectados: ${intC} internos + ${extC} externos`,'ok');
+
+  const name = state.pptxFile.name.replace(/\.pptx$/i,'')+'_links.pptx';
+  document.getElementById('res-link-sub').textContent = `${name} · ${(blob.size/1048576).toFixed(1)} MB`;
+  document.getElementById('res-link-stats').innerHTML = statsHTML([
+    [injected,'links totales'],[intC,'internos'],[extC,'externos']
+  ]);
+  document.getElementById('btn-dl-link').onclick = () => dlBlob(blob, name);
+  document.getElementById('res-link').classList.add('on');
+
+  addLog('Link Injector', `${injected} links inyectados (${intC} internos, ${extC} externos)`, name, 'badge-blue');
+  switchTab('link');
+}
+
+function buildLinkShape(id,rId,x,y,cx,cy,type) {
+  const hl = type==='internal'
+    ? `<a:hlinkClick r:id="${rId}" action="ppaction://hlinksldjump" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"/>`
+    : `<a:hlinkClick r:id="${rId}" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"/>`;
+  return `    <p:sp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+      <p:nvSpPr><p:cNvPr id="${id}" name="Link_${id}">${hl}</p:cNvPr><p:cNvSpPr><a:spLocks noChangeArrowheads="1"/></p:cNvSpPr><p:nvPr/></p:nvSpPr>
+      <p:spPr><a:xfrm><a:off x="${x}" y="${y}"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:noFill/><a:ln><a:noFill/></a:ln></p:spPr>
+      <p:txBody><a:bodyPr/><a:lstStyle/><a:p/></p:txBody>
+    </p:sp>`;
+}
+
+// ═══════════════════════════════════════════════════════
+// TRANSITIONS
+// ═══════════════════════════════════════════════════════
+const TRANS_TYPES = [
+  {val:'fade',label:'Fade'},
+  {val:'push',label:'Push'},
+  {val:'wipe',label:'Wipe'},
+  {val:'split',label:'Split'},
+  {val:'zoom',label:'Zoom'},
+  {val:'none',label:'Sin transición'},
+];
+
+function addRule(from='',to='',sec=4,trans='fade') {
+  ruleCount++;
+  const id = ruleCount;
+  const list = document.getElementById('rulesList');
+  const opts = TRANS_TYPES.map(t=>`<option value="${t.val}"${t.val===trans?' selected':''}>${t.label}</option>`).join('');
+  const card = document.createElement('div');
+  card.className='rule-card'; card.dataset.id=id;
+  card.innerHTML=`
+    <div class="rule-head">
+      <span class="rule-n">#${list.children.length+1}</span>
+      <span class="rule-desc" id="rd${id}">Nuevo rango</span>
+      <button class="btn-rm" onclick="removeRule(${id})">✕</button>
+    </div>
+    <div class="rule-body">
+      <div class="field"><label>Slide inicio</label>
+        <input type="number" class="r-from" min="1" max="${state.numSlides||9999}" value="${from}" placeholder="ej. 2" oninput="onRuleChange(${id})">
+      </div>
+      <div class="field"><label>Slide fin (se detiene aquí −1)</label>
+        <input type="number" class="r-to" min="1" max="${state.numSlides||9999}" value="${to}" placeholder="ej. 9" oninput="onRuleChange(${id})">
+      </div>
+      <div class="field"><label>Segundos</label>
+        <input type="number" class="r-sec" min="1" max="60" value="${sec}" oninput="onRuleChange(${id})">
+      </div>
+      <div class="field"><label>Transición</label>
+        <select class="r-trans" onchange="onRuleChange(${id})">${opts}</select>
+      </div>
+    </div>`;
+  list.appendChild(card);
+  onRuleChange(id);
+}
+
+function removeRule(id) {
+  document.querySelector(`.rule-card[data-id="${id}"]`)?.remove();
+  document.querySelectorAll('.rule-card').forEach((c,i)=>c.querySelector('.rule-n').textContent=`#${i+1}`);
+  renderSlideMap(); updateSummary();
+}
+
+function onRuleChange(id) {
+  const card = document.querySelector(`.rule-card[data-id="${id}"]`);
+  if(!card) return;
+  const from=parseInt(card.querySelector('.r-from').value)||0;
+  const to=parseInt(card.querySelector('.r-to').value)||0;
+  const sec=parseInt(card.querySelector('.r-sec').value)||0;
+  const trans=card.querySelector('.r-trans').value;
+  const tl=TRANS_TYPES.find(t=>t.val===trans)?.label||trans;
+  if(from&&to&&sec) card.querySelector(`#rd${id}`).textContent=`Slides ${from}–${to} · ${sec}s · ${tl}`;
+  renderSlideMap(); updateSummary();
+}
+
+function getRules() {
+  return [...document.querySelectorAll('.rule-card')].map(c=>({
+    from: parseInt(c.querySelector('.r-from').value),
+    to:   parseInt(c.querySelector('.r-to').value),
+    sec:  parseInt(c.querySelector('.r-sec').value)||4,
+    trans:c.querySelector('.r-trans').value
+  })).filter(r=>r.from&&r.to&&r.from<=r.to);
+}
+
+function renderSlideMap() {
+  if(!state.numSlides) return;
+  const map=document.getElementById('slideMap');
+  map.innerHTML='';
+  const covered=new Set();
+  getRules().forEach(r=>{ for(let i=r.from;i<=r.to;i++) covered.add(i); });
+  for(let i=1;i<=state.numSlides;i++){
+    const d=document.createElement('div');
+    d.className='sdot'+(covered.has(i)?' on':'');
+    d.title=`Slide ${i}`;
+    map.appendChild(d);
+  }
+}
+
+function updateSummary() {
+  const rules=getRules();
+  const s=document.getElementById('transSummary');
+  if(!rules.length){s.classList.remove('on');return;}
+  s.classList.add('on');
+  const rows=document.getElementById('sumRows');
+  rows.innerHTML='';
+  let total=0;
+  rules.forEach((r,i)=>{
+    const n=r.to-r.from+1; total+=n;
+    const tl=TRANS_TYPES.find(t=>t.val===r.trans)?.label||r.trans;
+    const d=document.createElement('div');
+    d.className='sum-row';
+    d.innerHTML=`<span class="sum-l">Rango #${i+1}: slides ${r.from}–${r.to} (${n} slides)</span><span class="sum-v">${r.sec}s · ${tl}</span>`;
+    rows.appendChild(d);
+  });
+  const d=document.createElement('div');
+  d.className='sum-row';
+  d.innerHTML=`<span class="sum-l">Click manual (sin cambio)</span><span class="sum-v">${Math.max(0,state.numSlides-total)} slides</span>`;
+  rows.appendChild(d);
+}
+
+async function runTransitions() {
+  const rules=getRules();
+  if(!rules.length){alert('Agrega al menos un rango.');return;}
+  const btn=document.getElementById('btn-trans');
+  btn.disabled=true; btn.innerHTML='<span class="spin"></span>Inyectando...';
+  document.getElementById('prog-trans').classList.add('on');
+
+  const map={};
+  rules.forEach(r=>{ for(let i=r.from;i<=r.to;i++) map[i]=r; });
+
+  const buf=await state.pptxFile.arrayBuffer();
+  const zip=await JSZip.loadAsync(buf);
+  const slides=Object.keys(zip.files).filter(f=>/^ppt\/slides\/slide\d+\.xml$/.test(f))
+    .sort((a,b)=>parseInt(a.match(/\d+/)[0])-parseInt(b.match(/\d+/)[0]));
+  let modified=0;
+
+  for(let i=0;i<slides.length;i++){
+    setProg('trans',10+(i/slides.length)*82,`Slide ${i+1}/${slides.length}...`);
+    const rule=map[i+1];
+    if(!rule) continue;
+    let xml=await zip.file(slides[i]).async('text');
+
+    // Remove any existing transition
+    xml = xml.replace(/<p:transition[\s\S]*?<\/p:transition>/g, '');
+
+    // Build and insert transition
+    const inner = {fade:'<p:fade/>',push:'<p:push dir="l"/>',wipe:'<p:wipe dir="l"/>',split:'<p:split orient="horz" dir="out"/>',zoom:'<p:zoom dir="in"/>',none:''}[rule.trans]||'<p:fade/>';
+    const transTag = `<p:transition advClick="0" advTm="${rule.sec*1000}" spd="med">${inner}</p:transition>`;
+
+    xml = xml.includes('</p:clrMapOvr>')
+      ? xml.replace('</p:clrMapOvr>', `</p:clrMapOvr>\n  ${transTag}`)
+      : xml.replace('</p:sld>', `  ${transTag}\n</p:sld>`);
+
+    zip.file(slides[i],xml);
+    modified++;
+    if(i%20===0) await tick();
+  }
+
+  setProg('trans',95,'Comprimiendo...');
+  const blob=await zip.generateAsync({type:'blob',mimeType:'application/vnd.openxmlformats-officedocument.presentationml.presentation',compression:'DEFLATE',compressionOptions:{level:6}});
+  state.blobs.trans=blob;
+  setProg('trans',100,'¡Listo!');
+  logMsg('trans',`${modified} slides con auto-advance`,'ok');
+
+  const name=state.pptxFile.name.replace(/\.pptx$/i,'')+'_transitions.pptx';
+  document.getElementById('res-trans-sub').textContent=`${name} · ${(blob.size/1048576).toFixed(1)} MB`;
+  document.getElementById('res-trans-stats').innerHTML=statsHTML([
+    [modified,'auto-advance'],
+    [slides.length-modified,'click manual'],
+    [rules.length,'rangos']
+  ]);
+  document.getElementById('btn-dl-trans').onclick=()=>dlBlob(blob,name);
+  document.getElementById('res-trans').classList.add('on');
+
+  addLog('Transitions',`${modified} slides con auto-advance, ${rules.length} rangos`,name,'badge-amber');
+}
+
+// ── Presets ────────────────────────────────────────────
+function savePreset() {
+  const rules=getRules();
+  if(!rules.length){alert('No hay rangos para guardar.');return;}
+  const name=prompt('Nombre del preset:');
+  if(!name) return;
+  state.presets.push({name,rules,date:new Date().toLocaleDateString()});
+  localStorage.setItem('bridge_presets',JSON.stringify(state.presets));
+  renderPresets();
+}
+
+function renderPresets() {
+  const el=document.getElementById('presetBtns');
+  el.innerHTML='';
+  state.presets.forEach((p,i)=>{
+    const b=document.createElement('button');
+    b.className='btn-preset';
+    b.textContent=`${p.name} (${p.rules.length} rangos)`;
+    b.title=`Guardado: ${p.date}`;
+    b.onclick=()=>loadPreset(i);
+    el.appendChild(b);
+  });
+}
+
+function loadPreset(i) {
+  const p=state.presets[i];
+  document.getElementById('rulesList').innerHTML='';
+  ruleCount=0;
+  p.rules.forEach(r=>addRule(r.from,r.to,r.sec,r.trans));
+}
+
+renderPresets();
+
+// ── Offset corrector ───────────────────────────────────
+let pendingOffsetRules = null;
+
+function applyOffset() {
+  const after = parseInt(document.getElementById('offsetAfter').value);
+  const count = parseInt(document.getElementById('offsetCount').value);
+  if (!after || !count) { alert('Define el slide de inserción y cuántos slides agregaste.'); return; }
+  const rules = getRules();
+  if (!rules.length) { alert('Primero carga o define rangos de transición.'); return; }
+
+  const preview = rules.map(r => {
+    const affected   = r.from > after;
+    const straddles  = r.from <= after && r.to > after;
+    const newFrom    = affected ? r.from + count : r.from;
+    const newTo      = affected ? r.to + count : straddles ? r.to + count : r.to;
+    const status     = affected ? 'recorrido' : straddles ? 'extendido' : 'sin cambio';
+    return { label: getRuleLabel(r), before: `${r.from}–${r.to}`, after: `${newFrom}–${newTo}`, status, newFrom, newTo, sec: r.sec, trans: r.trans };
+  });
+
+  pendingOffsetRules = preview;
+
+  const colors = { 'recorrido':'var(--c-trans)', 'extendido':'var(--c-link)', 'sin cambio':'var(--dim)' };
+  const tbody = document.getElementById('offsetTable');
+  tbody.innerHTML = '';
+  preview.forEach(p => {
+    const tr = document.createElement('tr');
+    tr.style.borderBottom = '1px solid rgba(63,63,70,.4)';
+    tr.innerHTML = `
+      <td style="padding:7px 14px;color:var(--text)">${p.label}</td>
+      <td style="padding:7px 14px;text-align:center;color:var(--dim)">${p.before}</td>
+      <td style="padding:7px 14px;text-align:center;color:${colors[p.status]};font-weight:500">${p.after}</td>
+      <td style="padding:7px 14px;text-align:center;">
+        <span style="font-size:.58rem;padding:2px 7px;border-radius:4px;background:${colors[p.status]}22;color:${colors[p.status]};border:1px solid ${colors[p.status]}44">${p.status}</span>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+
+  const shifted = preview.filter(p => p.status !== 'sin cambio').length;
+  document.getElementById('offsetSummary').textContent = `+${count} slides después del ${after} · ${shifted} rangos ajustados`;
+  document.getElementById('offsetPreview').style.display = 'block';
+}
+
+function cancelOffset() {
+  pendingOffsetRules = null;
+  document.getElementById('offsetPreview').style.display = 'none';
+  document.getElementById('offsetAfter').value = '';
+  document.getElementById('offsetCount').value = '';
+}
+
+function confirmOffset() {
+  if (!pendingOffsetRules) return;
+  document.getElementById('rulesList').innerHTML = '';
+  ruleCount = 0;
+  pendingOffsetRules.forEach(p => addRule(p.newFrom, p.newTo, p.sec, p.trans));
+  cancelOffset();
+  logMsg('trans', 'Offset aplicado · rangos recalculados', 'ok');
+  document.getElementById('prog-trans').classList.add('on');
+}
+
+function getRuleLabel(r) {
+  const known = [
+    { name:'Natura',    from:196, to:210 },
+    { name:'Maroma',    from:213, to:226 },
+    { name:'Moxche',    from:228, to:249 },
+    { name:'Breathless',from:251, to:267 },
+  ];
+  const match = known.find(k => k.from === r.from && k.to === r.to);
+  return match ? match.name : `Slides ${r.from}–${r.to}`;
+}
+
+// ═══════════════════════════════════════════════════════
+// SLIDE NOTES
+// ═══════════════════════════════════════════════════════
+function addNote(slide='',text='') {
+  noteCount++;
+  const id=noteCount;
+  const list=document.getElementById('notesList');
+  const card=document.createElement('div');
+  card.className='note-card'; card.dataset.id=id;
+  card.innerHTML=`
+    <div class="note-head">
+      <span class="note-slide-label">Slide número</span>
+      <input type="number" min="1" max="${state.numSlides||9999}" value="${slide}" placeholder="ej. 53"
+        style="width:80px;background:var(--s3);border:1px solid var(--b1);color:var(--text);border-radius:5px;padding:4px 8px;font-family:'Fira Code',monospace;font-size:.72rem;outline:none;margin-left:8px;">
+      <button class="btn-rm" style="margin-left:auto;" onclick="this.closest('.note-card').remove()">✕</button>
+    </div>
+    <div class="note-body">
+      <div style="font-size:.62rem;color:var(--dim);line-height:1.6;padding-top:4px;">
+        Solo visible para ti en la vista de presentador.<br>El huésped nunca lo ve.
+      </div>
+      <textarea placeholder="Ej: Aquí pregunta si tienen tarjeta de crédito. Si dice solo débito → ir al slide 65.">${text}</textarea>
+    </div>`;
+  list.appendChild(card);
+}
+
+async function runNotes() {
+  const noteCards=[...document.querySelectorAll('.note-card')];
+  const notes=noteCards.map(c=>({
+    slide: parseInt(c.querySelector('input[type=number]').value),
+    text:  c.querySelector('textarea').value.trim()
+  })).filter(n=>n.slide&&n.text);
+
+  if(!notes.length){alert('Agrega al menos una nota con slide y texto.');return;}
+
+  const btn=document.getElementById('btn-notes');
+  btn.disabled=true; btn.innerHTML='<span class="spin"></span>Inyectando...';
+  document.getElementById('prog-notes').classList.add('on');
+
+  const buf=await state.pptxFile.arrayBuffer();
+  const zip=await JSZip.loadAsync(buf);
+  setProg('notes',20,'Cargando PPTX...');
+
+  const slideFiles=Object.keys(zip.files)
+    .filter(f=>/^ppt\/slides\/slide\d+\.xml$/.test(f))
+    .sort((a,b)=>parseInt(a.match(/\d+/)[0])-parseInt(b.match(/\d+/)[0]));
+  const numSlides=slideFiles.length;
+
+  // Ensure notesSl ides folder exists in content types
+  let contentTypes=await zip.file('[Content_Types].xml')?.async('text')||'';
+
+  let injected=0;
+  for(const note of notes){
+    setProg('notes',20+((notes.indexOf(note)/notes.length)*70),`Slide ${note.slide}...`);
+    const idx=note.slide-1;
+    if(idx<0||idx>=numSlides) continue;
+
+    const slideBase=`slide${note.slide}`;
+    const notesPath=`ppt/notesSlides/notesSlide${note.slide}.xml`;
+    const notesRelsPath=`ppt/notesSlides/_rels/notesSlide${note.slide}.xml.rels`;
+    const slideRelsPath=`ppt/slides/_rels/${slideBase}.xml.rels`;
+
+    // Add notes slide rels back to slide
+    let slideRels=await zip.file(slideRelsPath)?.async('text')||'';
+    const hasNotesRel=slideRels.includes('notesSlide');
+    let notesRId='rId999';
+    if(!hasNotesRel&&slideRels.includes('</Relationships>')){
+      const maxRId=Math.max(0,...[...slideRels.matchAll(/Id="rId(\d+)"/g)].map(m=>parseInt(m[1])));
+      notesRId=`rId${maxRId+1}`;
+      slideRels=slideRels.replace('</Relationships>',
+        `  <Relationship Id="${notesRId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/notesSlide" Target="../notesSlides/notesSlide${note.slide}.xml"/>\n</Relationships>`);
+      zip.file(slideRelsPath,slideRels);
+    }
+
+    // Build notes slide XML
+    const notesXml=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<p:notes xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+  xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"
+  xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <p:cSld>
+    <p:spTree>
+      <p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>
+      <p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/>
+        <a:chOff x="0" y="0"/><a:chExt cx="0" cy="0"/></a:xfrm></p:grpSpPr>
+      <p:sp>
+        <p:nvSpPr>
+          <p:cNvPr id="2" name="Notes Placeholder"/>
+          <p:cNvSpPr><a:spLocks noGrp="1"/></p:cNvSpPr>
+          <p:nvPr><p:ph type="body" idx="1"/></p:nvPr>
+        </p:nvSpPr>
+        <p:spPr/>
+        <p:txBody>
+          <a:bodyPr/>
+          <a:lstStyle/>
+          <a:p><a:r><a:rPr lang="es-MX" dirty="0"/><a:t>${escXml(note.text)}</a:t></a:r></a:p>
+        </p:txBody>
+      </p:sp>
+    </p:spTree>
+  </p:cSld>
+</p:notes>`;
+
+    zip.file(notesPath,notesXml);
+
+    // Notes slide rels
+    zip.file(notesRelsPath,`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide" Target="../slides/${slideBase}.xml"/>
+</Relationships>`);
+
+    // Add to content types if not there
+    if(!contentTypes.includes(`notesSlide${note.slide}.xml`)){
+      contentTypes=contentTypes.replace('</Types>',
+        `  <Override PartName="/ppt/notesSlides/notesSlide${note.slide}.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.notesSlide+xml"/>\n</Types>`);
+    }
+
+    injected++;
+    logMsg('notes',`Slide ${note.slide}: nota añadida ✓`,'ok');
+  }
+
+  zip.file('[Content_Types].xml',contentTypes);
+
+  setProg('notes',95,'Comprimiendo...');
+  const blob=await zip.generateAsync({type:'blob',mimeType:'application/vnd.openxmlformats-officedocument.presentationml.presentation',compression:'DEFLATE',compressionOptions:{level:6}});
+  state.blobs.notes=blob;
+  setProg('notes',100,'¡Listo!');
+
+  const name=state.pptxFile.name.replace(/\.pptx$/i,'')+'_notes.pptx';
+  document.getElementById('res-notes-sub').textContent=`${name} · ${(blob.size/1048576).toFixed(1)} MB`;
+  document.getElementById('res-notes-stats').innerHTML=statsHTML([[injected,'notas añadidas'],[numSlides-injected,'sin cambio']]);
+  document.getElementById('btn-dl-notes').onclick=()=>dlBlob(blob,name);
+  document.getElementById('res-notes').classList.add('on');
+
+  addLog('Slide Notes',`${injected} notas de presentador inyectadas`,name,'badge-violet');
+}
+
+// ═══════════════════════════════════════════════════════
+// CHANGE LOG
+// ═══════════════════════════════════════════════════════
+function addLog(action,detail,file,badgeClass) {
+  state.changeLog.push({action,detail,file,badgeClass,time:new Date()});
+  document.getElementById('logEmpty').style.display='none';
+  const entries=document.getElementById('logEntries');
+  const entry=document.createElement('div');
+  entry.className='log-entry';
+  const timeStr=new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  entry.innerHTML=`
+    <div class="log-entry-head">
+      <div class="log-entry-action">
+        <span class="log-action-badge ${badgeClass}">${action}</span>
+      </div>
+      <span class="log-entry-time">${timeStr}</span>
+    </div>
+    <div class="log-entry-detail">
+      ${detail}<br>
+      <span style="color:var(--dim2)">→ ${file}</span>
+    </div>`;
+  entries.appendChild(entry);
+  document.getElementById('tab-log').classList.add('done');
+}
+
+function exportLog() {
+  if(!state.changeLog.length){alert('No hay entradas en el log.');return;}
+  const lines=['PDF→PPTX Bridge v2.0 — Change Log','='.repeat(50),''];
+  state.changeLog.forEach(e=>{
+    lines.push(`[${e.time.toLocaleString('es-MX')}] ${e.action}`);
+    lines.push(`  ${e.detail}`);
+    lines.push(`  Archivo: ${e.file}`);
+    lines.push('');
+  });
+  const blob=new Blob([lines.join('\n')],{type:'text/plain'});
+  dlBlob(blob,`bridge_log_${new Date().toISOString().slice(0,10)}.txt`);
+}
+
+// ═══════════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════════
+function setProg(tab,pct,label) {
+  const map={link:['pl','pf-link'],trans:['pt','pf-trans'],notes:['pn','pf-notes']};
+  const [p,cls]=map[tab]||['pl','pf-link'];
+  document.getElementById(`${p}-fill`).style.width=pct+'%';
+  document.getElementById(`${p}-pct`).textContent=Math.round(pct)+'%';
+  if(label) document.getElementById(`${p}-label`).textContent=label;
+}
+
+function logMsg(tab,msg,type='info') {
+  const dots={info:'▸',ok:'✓',warn:'⚠',err:'✗',dim:'·'};
+  const line=document.createElement('div');
+  line.className=`ll ${type}`;
+  line.innerHTML=`<span class="ld">${dots[type]}</span><span>${msg}</span>`;
+  const box=document.getElementById(`log-${tab}`);
+  box.appendChild(line); box.scrollTop=box.scrollHeight;
+}
+
+function statsHTML(items) {
+  return items.map(([n,l])=>`<div class="stat"><span class="stat-n">${n}</span><span class="stat-l">${l}</span></div>`).join('');
+}
+
+function dlBlob(blob,name) {
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=name; a.click();
+}
+
+function escXml(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');
+}
+
+function tick() { return new Promise(r=>setTimeout(r,0)); }
+
+function resetResult(tab) {
+  state.blobs[tab]=null;
+  document.getElementById(`res-${tab}`).classList.remove('on');
+  document.getElementById(`prog-${tab}`).classList.remove('on');
+  document.getElementById(`log-${tab}`).innerHTML='';
+  if(tab==='link'){
+    document.getElementById('btn-link').disabled=!state.pptxFile||!state.pdfFile;
+    document.getElementById('btn-link').innerHTML='Extraer links e inyectar en PPTX →';
+    state.extractedLinks=[];
+  }
+  if(tab==='trans'){
+    document.getElementById('btn-trans').disabled=!state.pptxFile;
+    document.getElementById('btn-trans').innerHTML='Inyectar transiciones →';
+  }
+  if(tab==='notes'){
+    document.getElementById('btn-notes').disabled=!state.pptxFile;
+    document.getElementById('btn-notes').innerHTML='Inyectar notas en PPTX →';
+  }
+}
+
+// Init: one empty rule
+addRule(2,9,4,'fade');
+</script>
+</body>
+</html>

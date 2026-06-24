@@ -1,0 +1,1369 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prospect Tracker — VIP Services</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Jost:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0f10;
+    --surface: #17171a;
+    --surface2: #1e1e23;
+    --surface3: #26262d;
+    --border: #2e2e38;
+    --border2: #3a3a48;
+    --text: #e8e8ee;
+    --text2: #9898aa;
+    --text3: #5a5a6e;
+    --accent: #c8a96e;
+    --accent2: #e8c98e;
+    --accent-dim: rgba(200,169,110,0.12);
+    --green: #5cb88a;
+    --green-dim: rgba(92,184,138,0.12);
+    --yellow: #e8c050;
+    --yellow-dim: rgba(232,192,80,0.12);
+    --red: #e06060;
+    --red-dim: rgba(224,96,96,0.12);
+    --blue: #6898d8;
+    --blue-dim: rgba(104,152,216,0.12);
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Jost', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 15px;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: var(--accent);
+  }
+  .logo span { color: var(--text2); font-style: italic; font-weight: 400; font-size: 16px; }
+  .header-right { display: flex; gap: 8px; align-items: center; }
+
+  /* ── TABS ── */
+  .tabs {
+    display: flex;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    padding: 12px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text3);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    transition: all 0.2s;
+    user-select: none;
+  }
+  .tab:hover { color: var(--text2); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ── MAIN LAYOUT ── */
+  main { padding: 20px; max-width: 1200px; margin: 0 auto; }
+
+  /* ── CARDS / SURFACES ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .card-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--accent);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* ── STATS GRID ── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .stat-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    text-align: center;
+  }
+  .stat-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 28px;
+    font-weight: 500;
+    color: var(--accent);
+    display: block;
+    line-height: 1;
+  }
+  .stat-label {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-top: 6px;
+    display: block;
+  }
+
+  /* ── PROGRESS BAR ── */
+  .progress-bar {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 6px;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 2px;
+    transition: width 0.4s ease;
+  }
+
+  /* ── BUTTONS ── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 16px;
+    border-radius: var(--radius-sm);
+    border: none;
+    cursor: pointer;
+    font-family: 'Jost', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    transition: all 0.2s;
+    user-select: none;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #0f0f10;
+  }
+  .btn-primary:hover { background: var(--accent2); }
+  .btn-ghost {
+    background: var(--surface2);
+    color: var(--text2);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { background: var(--surface3); color: var(--text); }
+  .btn-danger {
+    background: var(--red-dim);
+    color: var(--red);
+    border: 1px solid rgba(224,96,96,0.25);
+  }
+  .btn-danger:hover { background: rgba(224,96,96,0.2); }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+
+  /* ── FORMS ── */
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+  }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group.full { grid-column: 1 / -1; }
+  label {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text3);
+  }
+  input, select, textarea {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family: 'Jost', sans-serif;
+    font-size: 14px;
+    padding: 9px 12px;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--accent);
+  }
+  textarea { resize: vertical; min-height: 70px; }
+  select option { background: var(--surface2); }
+
+  /* ── PROSPECT LIST ── */
+  .prospect-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .prospect-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .prospect-card:hover { border-color: var(--border2); }
+
+  .prospect-header {
+    display: flex;
+    align-items: center;
+    padding: 14px 16px;
+    gap: 12px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .status-dot.pending { background: var(--text3); }
+  .status-dot.pitched { background: var(--blue); }
+  .status-dot.booked { background: var(--green); }
+  .status-dot.no-contact { background: var(--yellow); }
+  .status-dot.not-qualified { background: var(--red); }
+
+  .prospect-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 17px;
+    font-weight: 500;
+    flex: 1;
+    min-width: 0;
+  }
+  .prospect-meta {
+    font-size: 12px;
+    color: var(--text3);
+    font-family: 'DM Mono', monospace;
+    white-space: nowrap;
+  }
+
+  .prospect-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-left: auto;
+  }
+
+  .tag {
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+  .tag-blue { background: var(--blue-dim); color: var(--blue); }
+  .tag-green { background: var(--green-dim); color: var(--green); }
+  .tag-yellow { background: var(--yellow-dim); color: var(--yellow); }
+  .tag-red { background: var(--red-dim); color: var(--red); }
+  .tag-gold { background: var(--accent-dim); color: var(--accent); }
+  .tag-gray { background: var(--surface3); color: var(--text3); }
+
+  .prospect-body {
+    padding: 0 16px 16px;
+    border-top: 1px solid var(--border);
+    display: none;
+  }
+  .prospect-body.open { display: block; }
+
+  .info-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .info-item { display: flex; flex-direction: column; gap: 2px; }
+  .info-item .k {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text3);
+  }
+  .info-item .v {
+    font-size: 14px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* ── INTERACTION LOG ── */
+  .interactions { margin-top: 14px; }
+  .interactions-title {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 10px;
+  }
+  .interaction-entry {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    margin-bottom: 8px;
+    position: relative;
+  }
+  .interaction-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+  }
+  .interaction-type {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .interaction-date {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: 'DM Mono', monospace;
+  }
+  .interaction-notes {
+    font-size: 13px;
+    color: var(--text2);
+    line-height: 1.5;
+  }
+
+  /* ── QUICK LOG FORM ── */
+  .quick-log {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    margin-top: 12px;
+  }
+  .quick-log-title {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+  .outcome-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+  .outcome-btn {
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--surface3);
+    color: var(--text2);
+    font-family: 'Jost', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.18s;
+  }
+  .outcome-btn:hover { border-color: var(--border2); color: var(--text); }
+  .outcome-btn.selected { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); }
+  .outcome-btn.sel-green { border-color: var(--green); background: var(--green-dim); color: var(--green); }
+  .outcome-btn.sel-yellow { border-color: var(--yellow); background: var(--yellow-dim); color: var(--yellow); }
+  .outcome-btn.sel-red { border-color: var(--red); background: var(--red-dim); color: var(--red); }
+  .outcome-btn.sel-blue { border-color: var(--blue); background: var(--blue-dim); color: var(--blue); }
+
+  /* ── MODAL ── */
+  .modal-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    width: 100%;
+    max-width: 560px;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 24px;
+  }
+  .modal-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--accent);
+    margin-bottom: 20px;
+  }
+  .modal-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 20px;
+  }
+
+  /* ── CSV IMPORT ── */
+  .import-zone {
+    border: 2px dashed var(--border2);
+    border-radius: var(--radius);
+    padding: 40px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 16px;
+  }
+  .import-zone:hover { border-color: var(--accent); background: var(--accent-dim); }
+  .import-zone.drag-over { border-color: var(--accent); background: var(--accent-dim); }
+  .import-icon { font-size: 36px; margin-bottom: 10px; }
+  .import-hint { color: var(--text3); font-size: 13px; margin-top: 8px; }
+
+  /* ── FILTER BAR ── */
+  .filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+    align-items: center;
+  }
+  .filter-bar input {
+    flex: 1;
+    min-width: 180px;
+  }
+  .filter-btn {
+    padding: 7px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text3);
+    font-family: 'Jost', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    transition: all 0.18s;
+    white-space: nowrap;
+  }
+  .filter-btn:hover { color: var(--text2); }
+  .filter-btn.active { background: var(--accent-dim); color: var(--accent); border-color: var(--accent); }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text3);
+  }
+  .empty-icon { font-size: 48px; margin-bottom: 16px; }
+  .empty-text { font-size: 15px; margin-bottom: 8px; color: var(--text2); }
+  .empty-hint { font-size: 13px; }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--surface3);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    padding: 10px 20px;
+    font-size: 13px;
+    color: var(--text);
+    transition: transform 0.3s ease;
+    z-index: 999;
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ── DASHBOARD CHARTS ── */
+  .chart-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .mini-chart-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+  }
+  .mini-chart-title {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 12px;
+  }
+  .bar-chart { display: flex; flex-direction: column; gap: 6px; }
+  .bar-row { display: flex; align-items: center; gap: 8px; }
+  .bar-label { font-size: 12px; color: var(--text2); width: 110px; flex-shrink: 0; }
+  .bar-track { flex: 1; height: 8px; background: var(--surface3); border-radius: 4px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
+  .bar-val { font-size: 12px; font-family: 'DM Mono', monospace; color: var(--text3); width: 24px; text-align: right; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 600px) {
+    header { padding: 12px 14px; }
+    main { padding: 14px; }
+    .form-grid { grid-template-columns: 1fr 1fr; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .prospect-tags { display: none; }
+    .modal { padding: 18px; }
+  }
+
+  /* ── HIDDEN ── */
+  .hidden { display: none !important; }
+
+  /* ── SECTION ── */
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* ── DIVIDER ── */
+  .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+  /* ── SORTABLE HEADER ── */
+  .sort-btn {
+    background: none;
+    border: none;
+    color: var(--text3);
+    cursor: pointer;
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-family: 'Jost', sans-serif;
+    transition: color 0.2s;
+  }
+  .sort-btn:hover { color: var(--text2); }
+  .sort-btn.active { color: var(--accent); }
+
+  .list-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .list-count { font-size: 12px; color: var(--text3); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Prospect Tracker <span>· VIP Services</span></div>
+  <div class="header-right">
+    <button class="btn btn-primary btn-sm" onclick="openAddModal()">＋ Prospecto</button>
+    <button class="btn btn-ghost btn-sm" onclick="exportData()">⬇ Export</button>
+  </div>
+</header>
+
+<nav class="tabs">
+  <div class="tab active" onclick="showSection('dashboard', this)">Dashboard</div>
+  <div class="tab" onclick="showSection('prospectos', this)">Prospectos</div>
+  <div class="tab" onclick="showSection('importar', this)">Importar CSV</div>
+</nav>
+
+<!-- ══════════════ DASHBOARD ══════════════ -->
+<section id="dashboard" class="section active">
+  <main>
+    <div class="stats-grid" id="statsGrid"></div>
+    <div class="chart-row" id="chartRow"></div>
+    <div class="card">
+      <div class="card-title">⚡ Pendientes de contactar hoy</div>
+      <div id="pendingList"></div>
+    </div>
+  </main>
+</section>
+
+<!-- ══════════════ PROSPECTOS ══════════════ -->
+<section id="prospectos" class="section">
+  <main>
+    <div class="filter-bar">
+      <input type="text" id="searchInput" placeholder="Buscar por nombre, habitación…" oninput="renderProspects()">
+      <button class="filter-btn active" data-filter="all" onclick="setFilter('all', this)">Todos</button>
+      <button class="filter-btn" data-filter="pending" onclick="setFilter('pending', this)">Sin contactar</button>
+      <button class="filter-btn" data-filter="pitched" onclick="setFilter('pitched', this)">Pitched</button>
+      <button class="filter-btn" data-filter="booked" onclick="setFilter('booked', this)">Agendados</button>
+      <button class="filter-btn" data-filter="no-contact" onclick="setFilter('no-contact', this)">No abordé</button>
+    </div>
+    <div class="list-controls">
+      <span class="list-count" id="listCount"></span>
+      <div style="display:flex;gap:6px;">
+        <button class="sort-btn" id="sortName" onclick="setSort('name')">Nombre</button>
+        <button class="sort-btn active" id="sortDate" onclick="setSort('checkin')">Check-in</button>
+        <button class="sort-btn" id="sortStatus" onclick="setSort('status')">Estado</button>
+      </div>
+    </div>
+    <div class="prospect-list" id="prospectList"></div>
+  </main>
+</section>
+
+<!-- ══════════════ IMPORTAR ══════════════ -->
+<section id="importar" class="section">
+  <main>
+    <div class="card">
+      <div class="card-title">📂 Importar desde CSV del CRM</div>
+      <div class="import-zone" id="importZone" onclick="document.getElementById('csvFile').click()">
+        <div class="import-icon">📋</div>
+        <div style="font-size:15px;color:var(--text2);">Arrastra tu archivo CSV aquí o toca para seleccionar</div>
+        <div class="import-hint">Formatos aceptados: .csv — El sistema detecta las columnas automáticamente</div>
+      </div>
+      <input type="file" id="csvFile" accept=".csv" style="display:none" onchange="handleCSV(this)">
+      <div id="csvPreview"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">📝 Columnas reconocidas automáticamente</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;">
+        <div class="mini-chart-box">
+          <div class="mini-chart-title">Nombre</div>
+          <div style="font-size:12px;color:var(--text2);">last_name, first_name, nombre, apellido, guest_name, name</div>
+        </div>
+        <div class="mini-chart-box">
+          <div class="mini-chart-title">Habitación</div>
+          <div style="font-size:12px;color:var(--text2);">room, room_number, habitacion, hab, cuarto</div>
+        </div>
+        <div class="mini-chart-box">
+          <div class="mini-chart-title">Fechas</div>
+          <div style="font-size:12px;color:var(--text2);">arrival, checkin, check_in, departure, checkout, check_out</div>
+        </div>
+        <div class="mini-chart-box">
+          <div class="mini-chart-title">Agencia / Canal</div>
+          <div style="font-size:12px;color:var(--text2);">agency, agencia, travel_agent, source, canal, tour_operator</div>
+        </div>
+        <div class="mini-chart-box">
+          <div class="mini-chart-title">Adultos / Niños</div>
+          <div style="font-size:12px;color:var(--text2);">adults, adultos, children, ninos, kids, pax</div>
+        </div>
+        <div class="mini-chart-box">
+          <div class="mini-chart-title">País / Idioma</div>
+          <div style="font-size:12px;color:var(--text2);">country, pais, nationality, language, idioma, locale</div>
+        </div>
+      </div>
+      <div style="margin-top:14px;font-size:13px;color:var(--text3);">
+        Las columnas que no se reconozcan se guardarán como "notas extra" del prospecto.
+      </div>
+    </div>
+  </main>
+</section>
+
+<!-- ══════════════ MODAL: AGREGAR/EDITAR ══════════════ -->
+<div class="modal-backdrop" id="addModal">
+  <div class="modal">
+    <div class="modal-title" id="modalTitle">Nuevo Prospecto</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Apellido(s) *</label>
+        <input type="text" id="f_lastname" placeholder="Smith">
+      </div>
+      <div class="form-group">
+        <label>Nombre(s)</label>
+        <input type="text" id="f_firstname" placeholder="John">
+      </div>
+      <div class="form-group">
+        <label>Habitación</label>
+        <input type="text" id="f_room" placeholder="5014">
+      </div>
+      <div class="form-group">
+        <label>Adultos</label>
+        <input type="number" id="f_adults" min="1" max="10" placeholder="2">
+      </div>
+      <div class="form-group">
+        <label>Niños</label>
+        <input type="number" id="f_children" min="0" max="10" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>Idioma / País</label>
+        <input type="text" id="f_country" placeholder="USA / EN">
+      </div>
+      <div class="form-group">
+        <label>Agencia / Canal</label>
+        <input type="text" id="f_agency" placeholder="Costco, Expedia…">
+      </div>
+      <div class="form-group">
+        <label>Check-in</label>
+        <input type="date" id="f_checkin">
+      </div>
+      <div class="form-group">
+        <label>Check-out</label>
+        <input type="date" id="f_checkout">
+      </div>
+      <div class="form-group">
+        <label>Prioridad</label>
+        <select id="f_priority">
+          <option value="normal">Normal</option>
+          <option value="high">Alta — perfil interesante</option>
+          <option value="low">Baja</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label>Notas iniciales</label>
+        <textarea id="f_notes" placeholder="Pareja joven, activos, llegaron entusiasmados…"></textarea>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('addModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveProspect()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ MODAL: LOG INTERACCIÓN ══════════════ -->
+<div class="modal-backdrop" id="logModal">
+  <div class="modal">
+    <div class="modal-title">Registrar interacción</div>
+    <input type="hidden" id="log_pid">
+
+    <div style="margin-bottom:12px;">
+      <label style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:8px;">¿Qué pasó?</label>
+      <div class="outcome-grid">
+        <div class="outcome-btn sel-green" data-val="booked" onclick="selectOutcome(this)">✓ Agendó presentación</div>
+        <div class="outcome-btn sel-blue" data-val="pitched" onclick="selectOutcome(this)">💬 Pitché, no agendó</div>
+        <div class="outcome-btn sel-yellow" data-val="no-contact" onclick="selectOutcome(this)">⊘ No los abordé</div>
+        <div class="outcome-btn" data-val="not-qualified" onclick="selectOutcome(this)">✗ No califica</div>
+        <div class="outcome-btn" data-val="follow-up" onclick="selectOutcome(this)">↻ Follow-up pendiente</div>
+        <div class="outcome-btn" data-val="pending" onclick="selectOutcome(this)">○ Sin interacción aún</div>
+      </div>
+    </div>
+
+    <div style="margin-bottom:12px;">
+      <label style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:8px;">Razón / Contexto</label>
+      <div class="outcome-grid" id="contextGrid">
+        <div class="outcome-btn" data-ctx="cansados" onclick="toggleCtx(this)">😴 Cansados</div>
+        <div class="outcome-btn" data-ctx="prisa" onclick="toggleCtx(this)">⏱ Con prisa</div>
+        <div class="outcome-btn" data-ctx="sin-necesidad" onclick="toggleCtx(this)">○ Sin necesidad</div>
+        <div class="outcome-btn" data-ctx="ya-miembro" onclick="toggleCtx(this)">★ Ya es miembro</div>
+        <div class="outcome-btn" data-ctx="no-decisor" onclick="toggleCtx(this)">👤 No es el decisor</div>
+        <div class="outcome-btn" data-ctx="actitud-cerrada" onclick="toggleCtx(this)">🚫 Actitud cerrada</div>
+        <div class="outcome-btn" data-ctx="buena-disposicion" onclick="toggleCtx(this)">😊 Buena disposición</div>
+        <div class="outcome-btn" data-ctx="interesado-precio" onclick="toggleCtx(this)">💰 Preguntó precio</div>
+        <div class="outcome-btn" data-ctx="no-vi-oportunidad" onclick="toggleCtx(this)">👁 No vi oportunidad</div>
+        <div class="outcome-btn" data-ctx="yo-no-aborde" onclick="toggleCtx(this)">🙈 Preferí no abordar</div>
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-bottom:14px;">
+      <label>Notas de la interacción</label>
+      <textarea id="log_notes" placeholder="Describe qué dijo, cómo reaccionó, qué objeción tuvo, qué abrió o cerró la conversación…"></textarea>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('logModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveLog()">Guardar registro</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════
+// DATA LAYER
+// ══════════════════════════════════════════
+const STORE_KEY = 'vip_prospects_v1';
+let prospects = [];
+let currentFilter = 'all';
+let currentSort = 'checkin';
+let editingId = null;
+
+function load() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    prospects = raw ? JSON.parse(raw) : [];
+  } catch(e) { prospects = []; }
+}
+function save() {
+  localStorage.setItem(STORE_KEY, JSON.stringify(prospects));
+}
+function uid() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+}
+
+// ══════════════════════════════════════════
+// STATUS CONFIG
+// ══════════════════════════════════════════
+const STATUS = {
+  'pending':       { label: 'Sin contactar', color: 'gray',   dot: 'pending' },
+  'pitched':       { label: 'Pitched',        color: 'blue',   dot: 'pitched' },
+  'booked':        { label: 'Agendó',         color: 'green',  dot: 'booked' },
+  'no-contact':    { label: 'No abordé',      color: 'yellow', dot: 'no-contact' },
+  'not-qualified': { label: 'No califica',    color: 'red',    dot: 'not-qualified' },
+  'follow-up':     { label: 'Follow-up',      color: 'blue',   dot: 'pitched' },
+};
+
+// ══════════════════════════════════════════
+// PROSPECT CRUD
+// ══════════════════════════════════════════
+function openAddModal(id) {
+  editingId = id || null;
+  document.getElementById('modalTitle').textContent = id ? 'Editar Prospecto' : 'Nuevo Prospecto';
+  const fields = ['lastname','firstname','room','adults','children','country','agency','checkin','checkout','priority','notes'];
+  if (id) {
+    const p = prospects.find(x => x.id === id);
+    if (p) fields.forEach(f => {
+      const el = document.getElementById('f_' + f);
+      if (el) el.value = p[f] || '';
+    });
+  } else {
+    fields.forEach(f => {
+      const el = document.getElementById('f_' + f);
+      if (el) el.value = f === 'priority' ? 'normal' : '';
+    });
+    // Default today for checkin
+    document.getElementById('f_checkin').value = today();
+  }
+  document.getElementById('addModal').classList.add('open');
+}
+function saveProspect() {
+  const lastname = document.getElementById('f_lastname').value.trim();
+  if (!lastname) { showToast('El apellido es requerido'); return; }
+  const p = {
+    id: editingId || uid(),
+    lastname,
+    firstname: document.getElementById('f_firstname').value.trim(),
+    room: document.getElementById('f_room').value.trim(),
+    adults: document.getElementById('f_adults').value,
+    children: document.getElementById('f_children').value,
+    country: document.getElementById('f_country').value.trim(),
+    agency: document.getElementById('f_agency').value.trim(),
+    checkin: document.getElementById('f_checkin').value,
+    checkout: document.getElementById('f_checkout').value,
+    priority: document.getElementById('f_priority').value,
+    notes: document.getElementById('f_notes').value.trim(),
+    status: 'pending',
+    interactions: [],
+    createdAt: new Date().toISOString(),
+  };
+  if (editingId) {
+    const existing = prospects.find(x => x.id === editingId);
+    if (existing) {
+      p.status = existing.status;
+      p.interactions = existing.interactions;
+      p.createdAt = existing.createdAt;
+    }
+    prospects = prospects.map(x => x.id === editingId ? p : x);
+  } else {
+    prospects.unshift(p);
+  }
+  save();
+  closeModal('addModal');
+  renderAll();
+  showToast(editingId ? 'Prospecto actualizado' : 'Prospecto agregado ✓');
+  editingId = null;
+}
+function deleteProspect(id) {
+  if (!confirm('¿Eliminar este prospecto?')) return;
+  prospects = prospects.filter(x => x.id !== id);
+  save();
+  renderAll();
+  showToast('Prospecto eliminado');
+}
+
+// ══════════════════════════════════════════
+// INTERACTION LOG
+// ══════════════════════════════════════════
+let selectedOutcome = null;
+let selectedCtxs = [];
+
+function openLogModal(id) {
+  document.getElementById('log_pid').value = id;
+  document.getElementById('log_notes').value = '';
+  selectedOutcome = null;
+  selectedCtxs = [];
+  // Reset UI
+  document.querySelectorAll('.outcome-grid .outcome-btn').forEach(b => {
+    const cls = b.className.split(' ').find(c => c.startsWith('sel-'));
+    if (cls) { b.classList.remove('selected', cls); }
+    else b.classList.remove('selected');
+  });
+  document.querySelectorAll('#contextGrid .outcome-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('logModal').classList.add('open');
+}
+
+function selectOutcome(el) {
+  document.querySelectorAll('.outcome-grid:first-of-type .outcome-btn').forEach(b => {
+    const cls = b.className.split(' ').find(c => c.startsWith('sel-'));
+    if (cls) b.classList.remove('selected');
+  });
+  selectedOutcome = el.dataset.val;
+  const cls = el.className.split(' ').find(c => c.startsWith('sel-'));
+  if (cls) el.classList.add('selected');
+}
+
+function toggleCtx(el) {
+  const val = el.dataset.ctx;
+  if (selectedCtxs.includes(val)) {
+    selectedCtxs = selectedCtxs.filter(x => x !== val);
+    el.classList.remove('selected');
+  } else {
+    selectedCtxs.push(val);
+    el.classList.add('selected');
+  }
+}
+
+function saveLog() {
+  const id = document.getElementById('log_pid').value;
+  const notes = document.getElementById('log_notes').value.trim();
+  if (!selectedOutcome && !notes) { showToast('Selecciona un resultado o agrega notas'); return; }
+  const p = prospects.find(x => x.id === id);
+  if (!p) return;
+  const entry = {
+    id: uid(),
+    outcome: selectedOutcome || 'pending',
+    contexts: [...selectedCtxs],
+    notes,
+    date: new Date().toISOString(),
+  };
+  p.interactions.push(entry);
+  // Update main status
+  if (selectedOutcome) p.status = selectedOutcome;
+  save();
+  closeModal('logModal');
+  renderAll();
+  showToast('Interacción registrada ✓');
+}
+
+// ══════════════════════════════════════════
+// RENDER PROSPECTS
+// ══════════════════════════════════════════
+function getFiltered() {
+  let list = [...prospects];
+  const q = (document.getElementById('searchInput')?.value || '').toLowerCase();
+  if (q) list = list.filter(p =>
+    (p.lastname + ' ' + p.firstname + ' ' + p.room + ' ' + p.agency).toLowerCase().includes(q)
+  );
+  if (currentFilter !== 'all') list = list.filter(p => p.status === currentFilter);
+  list.sort((a, b) => {
+    if (currentSort === 'name') return a.lastname.localeCompare(b.lastname);
+    if (currentSort === 'checkin') return (a.checkin || '').localeCompare(b.checkin || '');
+    if (currentSort === 'status') return (a.status || '').localeCompare(b.status || '');
+    return 0;
+  });
+  return list;
+}
+
+function renderProspects() {
+  const list = getFiltered();
+  const container = document.getElementById('prospectList');
+  document.getElementById('listCount').textContent = `${list.length} prospecto${list.length !== 1 ? 's' : ''}`;
+  if (!list.length) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-text">No hay prospectos aquí</div><div class="empty-hint">Agrega uno manualmente o importa un CSV</div></div>`;
+    return;
+  }
+  container.innerHTML = list.map(p => buildCard(p)).join('');
+}
+
+function buildCard(p) {
+  const st = STATUS[p.status] || STATUS['pending'];
+  const nights = nightsBetween(p.checkin, p.checkout);
+  const pax = [p.adults ? p.adults + ' ad.' : '', p.children > 0 ? p.children + ' niños' : ''].filter(Boolean).join(', ');
+  const lastLog = p.interactions.length ? p.interactions[p.interactions.length - 1] : null;
+  const interCount = p.interactions.length;
+
+  const priorityTag = p.priority === 'high'
+    ? `<span class="tag tag-gold">⭐ Alta</span>` : '';
+
+  const statusTag = `<span class="tag tag-${st.color}">${st.label}</span>`;
+
+  const logsHtml = p.interactions.length
+    ? p.interactions.slice().reverse().map(i => {
+        const ist = STATUS[i.outcome] || STATUS['pending'];
+        const ctxStr = i.contexts && i.contexts.length ? ` · ${i.contexts.join(', ')}` : '';
+        return `<div class="interaction-entry">
+          <div class="interaction-header">
+            <span class="interaction-type" style="color:var(--${ist.color || 'text2'})">${ist.label}${ctxStr}</span>
+            <span class="interaction-date">${fmtDate(i.date)}</span>
+          </div>
+          ${i.notes ? `<div class="interaction-notes">${esc(i.notes)}</div>` : ''}
+        </div>`;
+      }).join('') : `<div style="color:var(--text3);font-size:13px;padding:8px 0;">Sin interacciones registradas aún.</div>`;
+
+  return `<div class="prospect-card" id="pc_${p.id}">
+    <div class="prospect-header" onclick="toggleCard('${p.id}')">
+      <div class="status-dot ${st.dot}"></div>
+      <div class="prospect-name">${esc(p.lastname)}${p.firstname ? ', ' + esc(p.firstname) : ''}</div>
+      ${p.room ? `<div class="prospect-meta">Hab. ${p.room}</div>` : ''}
+      <div class="prospect-tags">
+        ${priorityTag}
+        ${statusTag}
+        ${p.checkin ? `<span class="tag tag-gray">${fmtShort(p.checkin)}</span>` : ''}
+        ${interCount > 0 ? `<span class="tag tag-gray">${interCount} registro${interCount>1?'s':''}</span>` : ''}
+      </div>
+    </div>
+    <div class="prospect-body" id="pb_${p.id}">
+      <div class="info-row">
+        ${p.checkin ? `<div class="info-item"><div class="k">Check-in</div><div class="v">${fmtShort(p.checkin)}</div></div>` : ''}
+        ${p.checkout ? `<div class="info-item"><div class="k">Check-out</div><div class="v">${fmtShort(p.checkout)}</div></div>` : ''}
+        ${nights ? `<div class="info-item"><div class="k">Noches</div><div class="v">${nights}</div></div>` : ''}
+        ${pax ? `<div class="info-item"><div class="k">Pax</div><div class="v">${pax}</div></div>` : ''}
+        ${p.country ? `<div class="info-item"><div class="k">País/Idioma</div><div class="v">${esc(p.country)}</div></div>` : ''}
+        ${p.agency ? `<div class="info-item"><div class="k">Agencia</div><div class="v">${esc(p.agency)}</div></div>` : ''}
+      </div>
+      ${p.notes ? `<div style="padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;color:var(--text2);">${esc(p.notes)}</div>` : ''}
+      <div class="interactions">
+        <div class="interactions-title">Historial de interacciones</div>
+        ${logsHtml}
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">
+        <button class="btn btn-primary btn-sm" onclick="openLogModal('${p.id}')">+ Registrar interacción</button>
+        <button class="btn btn-ghost btn-sm" onclick="openAddModal('${p.id}')">✎ Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteProspect('${p.id}')">✕ Eliminar</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function toggleCard(id) {
+  const body = document.getElementById('pb_' + id);
+  if (body) body.classList.toggle('open');
+}
+
+// ══════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════
+function renderDashboard() {
+  const total = prospects.length;
+  const byStatus = {};
+  prospects.forEach(p => { byStatus[p.status] = (byStatus[p.status] || 0) + 1; });
+  const booked = byStatus['booked'] || 0;
+  const pitched = (byStatus['pitched'] || 0) + (byStatus['follow-up'] || 0);
+  const noContact = byStatus['no-contact'] || 0;
+  const pending = byStatus['pending'] || 0;
+  const contacted = total - pending - noContact;
+  const convRate = contacted > 0 ? Math.round((booked / contacted) * 100) : 0;
+  const contactRate = total > 0 ? Math.round((contacted / total) * 100) : 0;
+
+  document.getElementById('statsGrid').innerHTML = `
+    <div class="stat-box">
+      <span class="stat-num">${total}</span>
+      <span class="stat-label">Total prospectos</span>
+    </div>
+    <div class="stat-box">
+      <span class="stat-num" style="color:var(--green)">${booked}</span>
+      <span class="stat-label">Agendados</span>
+    </div>
+    <div class="stat-box">
+      <span class="stat-num" style="color:var(--blue)">${pitched}</span>
+      <span class="stat-label">Pitched</span>
+    </div>
+    <div class="stat-box">
+      <span class="stat-num" style="color:var(--yellow)">${noContact}</span>
+      <span class="stat-label">No abordé</span>
+    </div>
+    <div class="stat-box">
+      <span class="stat-num">${pending}</span>
+      <span class="stat-label">Sin contactar</span>
+    </div>
+    <div class="stat-box">
+      <span class="stat-num" style="color:${convRate >= 25 ? 'var(--green)' : 'var(--accent)'}">${convRate}%</span>
+      <span class="stat-label">Tasa conversión</span>
+      <div class="progress-bar"><div class="progress-fill" style="width:${convRate}%"></div></div>
+    </div>
+    <div class="stat-box">
+      <span class="stat-num">${contactRate}%</span>
+      <span class="stat-label">Tasa contacto</span>
+      <div class="progress-bar"><div class="progress-fill" style="width:${contactRate}%"></div></div>
+    </div>
+  `;
+
+  // Context analysis
+  const ctxCount = {};
+  prospects.forEach(p => p.interactions.forEach(i =>
+    (i.contexts || []).forEach(c => ctxCount[c] = (ctxCount[c] || 0) + 1)
+  ));
+  const ctxLabels = {
+    'cansados': 'Cansados', 'prisa': 'Con prisa', 'sin-necesidad': 'Sin necesidad',
+    'ya-miembro': 'Ya es miembro', 'no-decisor': 'No es decisor',
+    'actitud-cerrada': 'Actitud cerrada', 'buena-disposicion': 'Buena disposición',
+    'interesado-precio': 'Preguntó precio', 'no-vi-oportunidad': 'No vi oportunidad',
+    'yo-no-aborde': 'Yo no abordé'
+  };
+  const ctxEntries = Object.entries(ctxCount).sort((a,b) => b[1]-a[1]).slice(0,6);
+  const ctxMax = ctxEntries.length ? ctxEntries[0][1] : 1;
+  const ctxColors = ['var(--accent)','var(--blue)','var(--green)','var(--yellow)','var(--red)','var(--text2)'];
+
+  document.getElementById('chartRow').innerHTML = `
+    <div class="mini-chart-box">
+      <div class="mini-chart-title">Razones más frecuentes</div>
+      <div class="bar-chart">
+        ${ctxEntries.length ? ctxEntries.map((([k,v],i) => `
+          <div class="bar-row">
+            <div class="bar-label">${ctxLabels[k]||k}</div>
+            <div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/ctxMax*100)}%;background:${ctxColors[i%ctxColors.length]}"></div></div>
+            <div class="bar-val">${v}</div>
+          </div>`)).join('') : '<div style="color:var(--text3);font-size:12px;">Aún sin datos</div>'}
+      </div>
+    </div>
+    <div class="mini-chart-box">
+      <div class="mini-chart-title">Estado del pipeline</div>
+      <div class="bar-chart">
+        ${Object.entries(STATUS).filter(([k]) => byStatus[k]).map(([k, s], i) => `
+          <div class="bar-row">
+            <div class="bar-label">${s.label}</div>
+            <div class="bar-track"><div class="bar-fill" style="width:${total > 0 ? Math.round((byStatus[k]||0)/total*100) : 0}%;background:var(--${s.color === 'gray' ? 'text3' : s.color})"></div></div>
+            <div class="bar-val">${byStatus[k]||0}</div>
+          </div>`).join('')}
+      </div>
+    </div>
+  `;
+
+  // Pending today
+  const todayStr = today();
+  const todayProspects = prospects.filter(p =>
+    p.status === 'pending' && p.checkin && p.checkin <= todayStr && (!p.checkout || p.checkout >= todayStr)
+  );
+  const pendingEl = document.getElementById('pendingList');
+  if (!todayProspects.length) {
+    pendingEl.innerHTML = `<div style="color:var(--text3);font-size:13px;padding:8px 0;">No hay prospectos sin contactar en casa hoy — o aún no has cargado la lista del día.</div>`;
+  } else {
+    pendingEl.innerHTML = todayProspects.map(p => `
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);">
+        <div class="status-dot pending"></div>
+        <div style="flex:1;">
+          <div style="font-family:'Cormorant Garamond',serif;font-size:16px;">${esc(p.lastname)}${p.firstname ? ', ' + esc(p.firstname) : ''}</div>
+          <div style="font-size:12px;color:var(--text3);">${p.room ? 'Hab. ' + p.room : ''} ${p.country ? '· ' + p.country : ''} ${p.adults ? '· ' + p.adults + ' ad.' : ''}</div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="openLogModal('${p.id}')">Registrar</button>
+      </div>`).join('');
+  }
+}
+
+// ══════════════════════════════════════════
+// CSV IMPORT
+// ══════════════════════════════════════════
+function handleCSV(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => parseCSV(e.target.result);
+  reader.readAsText(file, 'UTF-8');
+}
+
+const importZone = document.getElementById('importZone');
+importZone.addEventListener('dragover', e => { e.preventDefault(); importZone.classList.add('drag-over'); });
+importZone.addEventListener('dragleave', () => importZone.classList.remove('drag-over'));
+importZone.addEventListener('drop', e => {
+  e.preventDefault();
+  importZone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) { const r = new FileReader(); r.onload = ev => parseCSV(ev.target.result); r.readAsText(file,'UTF-8'); }
+});
+
+const COL_MAP = {
+  lastname: ['last_name','lastname','apellido','apellidos','surname','guest_lastname'],
+  firstname: ['first_name','firstname','nombre','name','guest_name','guest_firstname'],
+  room: ['room','room_number','habitacion','hab','cuarto','room_no'],
+  adults: ['adults','adultos','adult','pax_adults'],
+  children: ['children','ninos','niños','kids','child','pax_children'],
+  country: ['country','pais','nationality','language','idioma','locale','lang'],
+  agency: ['agency','agencia','travel_agent','source','canal','tour_operator','booking_source'],
+  checkin: ['arrival','checkin','check_in','arrival_date','fecha_llegada','fecha_entrada'],
+  checkout: ['departure','checkout','check_out','departure_date','fecha_salida'],
+};
+
+function mapHeaders(headers) {
+  const mapping = {};
+  headers.forEach((h, i) => {
+    const key = h.toLowerCase().trim().replace(/\s+/g,'_');
+    for (const [field, aliases] of Object.entries(COL_MAP)) {
+      if (aliases.includes(key) && !mapping[field]) mapping[field] = i;
+    }
+  });
+  return mapping;
+}
+
+function parseCSV(text) {
+  const lines = text.trim().split(/\r?\n/);
+  if (lines.length < 2) { showToast('CSV vacío o sin datos'); return; }
+  const headers = lines[0].split(',').map(h => h.replace(/^"|"$/g,'').trim());
+  const mapping = mapHeaders(headers);
+  const newOnes = [];
+  for (let i = 1; i < lines.length; i++) {
+    const cols = splitCSVRow(lines[i]);
+    if (cols.length < 2) continue;
+    const get = field => mapping[field] !== undefined ? (cols[mapping[field]] || '').replace(/^"|"$/g,'').trim() : '';
+    const lastname = get('lastname');
+    if (!lastname) continue;
+    // Avoid duplicates by room + lastname + checkin
+    const room = get('room');
+    const checkin = get('checkin');
+    const exists = prospects.some(p =>
+      p.lastname.toLowerCase() === lastname.toLowerCase() && p.room === room && p.checkin === checkin
+    );
+    if (exists) continue;
+    newOnes.push({
+      id: uid(),
+      lastname,
+      firstname: get('firstname'),
+      room,
+      adults: get('adults'),
+      children: get('children'),
+      country: get('country'),
+      agency: get('agency'),
+      checkin,
+      checkout: get('checkout'),
+      priority: 'normal',
+      notes: '',
+      status: 'pending',
+      interactions: [],
+      createdAt: new Date().toISOString(),
+    });
+  }
+  if (!newOnes.length) {
+    document.getElementById('csvPreview').innerHTML = `<div style="color:var(--yellow);font-size:13px;padding:12px 0;">No se encontraron prospectos nuevos. Puede que ya estén cargados o el CSV esté vacío.</div>`;
+    return;
+  }
+  prospects = [...newOnes, ...prospects];
+  save();
+  renderAll();
+  document.getElementById('csvPreview').innerHTML = `
+    <div style="color:var(--green);font-size:14px;padding:12px 0;">
+      ✓ ${newOnes.length} prospecto${newOnes.length>1?'s':''} importado${newOnes.length>1?'s':''}
+      — Columnas mapeadas: ${Object.keys(mapping).join(', ')}
+    </div>`;
+  showToast(`${newOnes.length} prospectos importados ✓`);
+}
+
+function splitCSVRow(row) {
+  const result = [];
+  let cur = '';
+  let inQuotes = false;
+  for (let c of row) {
+    if (c === '"') { inQuotes = !inQuotes; }
+    else if (c === ',' && !inQuotes) { result.push(cur); cur = ''; }
+    else cur += c;
+  }
+  result.push(cur);
+  return result;
+}
+
+// ══════════════════════════════════════════
+// EXPORT
+// ══════════════════════════════════════════
+function exportData() {
+  const headers = 'apellido,nombre,habitacion,adultos,ninos,pais,agencia,checkin,checkout,estado,interacciones,notas';
+  const rows = prospects.map(p => [
+    p.lastname, p.firstname, p.room, p.adults, p.children, p.country, p.agency,
+    p.checkin, p.checkout, p.status, p.interactions.length, p.notes
+  ].map(v => `"${(v||'').toString().replace(/"/g,'""')}"`).join(','));
+  const blob = new Blob([headers + '\n' + rows.join('\n')], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `prospectos_${today()}.csv`;
+  a.click();
+  showToast('CSV exportado ✓');
+}
+
+// ══════════════════════════════════════════
+// UI HELPERS
+// ══════════════════════════════════════════
+function showSection(id, tab) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (tab) tab.classList.add('active');
+  renderAll();
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+function setFilter(f, el) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderProspects();
+}
+
+function setSort(s) {
+  currentSort = s;
+  document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('sort' + s.charAt(0).toUpperCase() + s.slice(1))?.classList.add('active');
+  renderProspects();
+}
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+function esc(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function today() {
+  return new Date().toISOString().slice(0,10);
+}
+function fmtDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleDateString('es-MX', {day:'2-digit',month:'short', hour:'2-digit',minute:'2-digit'});
+}
+function fmtShort(iso) {
+  if (!iso) return '';
+  const [y,m,d] = iso.split('-');
+  const months = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  return `${parseInt(d)} ${months[parseInt(m)-1]}`;
+}
+function nightsBetween(a, b) {
+  if (!a || !b) return '';
+  const diff = (new Date(b) - new Date(a)) / 86400000;
+  return diff > 0 ? diff + ' noche' + (diff > 1 ? 's' : '') : '';
+}
+
+function renderAll() {
+  renderDashboard();
+  renderProspects();
+}
+
+// Close modal on backdrop click
+document.querySelectorAll('.modal-backdrop').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+load();
+renderAll();
+</script>
+</body>
+</html>

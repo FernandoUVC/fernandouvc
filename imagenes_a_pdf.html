@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Imágenes → PDF Carta</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;700;800&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0e0e10;
+    --surface: #18181c;
+    --border: #2a2a32;
+    --accent: #e8ff47;
+    --accent2: #47ffe8;
+    --text: #f0f0f0;
+    --muted: #888;
+    --danger: #ff5c5c;
+    --radius: 10px;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── HEADER ── */
+  header {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .logo { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.5px; }
+  .logo span { color: var(--accent); }
+  .badge {
+    font-family: 'DM Mono', monospace;
+    font-size: .68rem;
+    color: var(--muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 3px 8px;
+    border-radius: 4px;
+  }
+
+  /* ── TOOLBAR ── */
+  .toolbar {
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .btn {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: .82rem;
+    border: none;
+    border-radius: var(--radius);
+    padding: 9px 16px;
+    cursor: pointer;
+    transition: opacity .15s, transform .1s;
+    letter-spacing: .3px;
+    white-space: nowrap;
+  }
+  .btn:active { transform: scale(.97); }
+  .btn-accent  { background: var(--accent); color: #111; }
+  .btn-accent2 { background: var(--accent2); color: #111; }
+  .btn-ghost   { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+  .btn:hover   { opacity: .85; }
+  .btn:disabled { opacity: .35; cursor: not-allowed; }
+
+  .sep { width: 1px; height: 28px; background: var(--border); margin: 0 2px; flex-shrink: 0; }
+
+  /* PDF Options */
+  .pdf-options {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    font-size: .78rem;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+  }
+  .pdf-options label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+  .pdf-options select, .pdf-options input[type=number] {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 6px;
+    padding: 5px 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: .76rem;
+  }
+  .pdf-options input[type=checkbox] { accent-color: var(--accent); width: 14px; height: 14px; }
+
+  /* ── COUNT BAR ── */
+  .count-bar {
+    padding: 8px 24px;
+    font-family: 'DM Mono', monospace;
+    font-size: .72rem;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .count-bar strong { color: var(--accent); font-size: .85rem; }
+
+  /* ── DROP ZONE ── */
+  #dropzone {
+    margin: 16px 24px 0;
+    border: 2px dashed var(--border);
+    border-radius: 14px;
+    padding: 28px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .2s, background .2s;
+  }
+  #dropzone.drag-over { border-color: var(--accent); background: rgba(232,255,71,.04); }
+  #dropzone p { color: var(--muted); font-size: .88rem; }
+  #dropzone .dz-icon { font-size: 2.2rem; margin-bottom: 8px; }
+  #dropzone .dz-hint { font-family: 'DM Mono', monospace; font-size: .68rem; margin-top: 6px; color: #555; }
+  #fileInput { display: none; }
+
+  /* ── GRID ── */
+  #grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 16px;
+    padding: 16px 24px 32px;
+    flex: 1;
+  }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    position: relative;
+    transition: box-shadow .2s, border-color .2s;
+    user-select: none;
+    animation: fadeIn .25s ease;
+    display: flex;
+    flex-direction: column;
+  }
+  @keyframes fadeIn { from { opacity:0; transform: scale(.94); } to { opacity:1; transform: scale(1); } }
+  .card:hover { border-color: #3a3a48; }
+
+  /* Big page number badge */
+  .card-badge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background: var(--accent);
+    color: #111;
+    font-family: 'DM Mono', monospace;
+    font-weight: 700;
+    font-size: .9rem;
+    line-height: 1;
+    padding: 5px 9px;
+    border-radius: 7px;
+    z-index: 2;
+    min-width: 30px;
+    text-align: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,.6);
+    pointer-events: none;
+  }
+
+  .card img {
+    width: 100%;
+    aspect-ratio: 4/3;
+    object-fit: cover;
+    display: block;
+    pointer-events: none;
+  }
+
+  /* ── CARD FOOTER ── */
+  .card-footer {
+    padding: 7px 8px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: var(--surface);
+  }
+
+  .card-name {
+    font-size: .64rem;
+    color: var(--muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* Arrow controls */
+  .card-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+    gap: 4px;
+  }
+  .ctrl-btn {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 6px;
+    padding: 6px 4px;
+    cursor: pointer;
+    font-size: .78rem;
+    line-height: 1;
+    transition: background .12s, border-color .12s, color .12s;
+    text-align: center;
+  }
+  .ctrl-btn:hover:not(:disabled) {
+    background: #252530;
+    border-color: var(--accent2);
+    color: var(--accent2);
+  }
+  .ctrl-btn:active:not(:disabled) { transform: scale(.94); }
+  .ctrl-btn:disabled { opacity: .2; cursor: not-allowed; }
+  .ctrl-btn.danger:hover:not(:disabled) { border-color: var(--danger); color: var(--danger); background: rgba(255,92,92,.08); }
+
+  /* ── PROGRESS ── */
+  #progressWrap {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(14,14,16,.9);
+    backdrop-filter: blur(8px);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 16px;
+  }
+  #progressWrap.show { display: flex; }
+  #progressWrap p { font-size: 1rem; color: var(--text); }
+  #progressBar { width: 300px; height: 6px; background: var(--border); border-radius: 99px; overflow: hidden; }
+  #progressFill { height: 100%; background: var(--accent); width: 0%; transition: width .15s; border-radius: 99px; }
+  #progressLabel { font-family: 'DM Mono', monospace; font-size: .75rem; color: var(--muted); }
+
+  /* ── EMPTY ── */
+  #empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    color: var(--muted);
+    font-size: .9rem;
+    gap: 12px;
+    text-align: center;
+  }
+  #empty .e-icon { font-size: 3rem; }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">imagen<span>→</span>PDF</div>
+  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+    <span class="badge">Tamaño Carta · 8.5 × 11 in</span>
+    <span class="badge">PNG · JPG · WEBP · GIF · BMP</span>
+  </div>
+</header>
+
+<!-- TOOLBAR -->
+<div class="toolbar">
+  <button class="btn btn-accent" onclick="document.getElementById('fileInput').click()">＋ Agregar imágenes</button>
+  <input type="file" id="fileInput" accept="image/*" multiple>
+
+  <div class="sep"></div>
+
+  <div class="pdf-options">
+    <label>Imágenes por página
+      <select id="perPage">
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="4" selected>4</option>
+        <option value="6">6</option>
+        <option value="9">9</option>
+      </select>
+    </label>
+    <label>Margen (mm)
+      <input type="number" id="margin" value="10" min="0" max="30" style="width:54px">
+    </label>
+    <label>Espacio (mm)
+      <input type="number" id="gap" value="5" min="0" max="20" style="width:54px">
+    </label>
+    <label><input type="checkbox" id="chkNumbers"> Numerar páginas</label>
+    <label><input type="checkbox" id="chkFit" checked> Imagen completa</label>
+  </div>
+
+  <div class="sep"></div>
+
+  <button class="btn btn-accent2" id="btnGenerate" onclick="generatePDF()" disabled>⬇ Generar PDF</button>
+  <button class="btn btn-ghost" onclick="clearAll()">🗑 Limpiar</button>
+</div>
+
+<!-- COUNT BAR -->
+<div class="count-bar" id="countBar" style="display:none">
+  <strong id="countNum">0</strong> imágenes &nbsp;·&nbsp;
+  Usa ⏮ ◀ ▶ ⏭ para reordenar · ✕ para eliminar
+</div>
+
+<!-- DROP ZONE -->
+<div id="dropzone" onclick="document.getElementById('fileInput').click()">
+  <div class="dz-icon">🖼</div>
+  <p>Haz clic aquí o arrastra tus imágenes</p>
+  <p class="dz-hint">Sin límite de archivos — PNG · JPG · WEBP · GIF · BMP</p>
+</div>
+
+<!-- GRID -->
+<div id="grid"></div>
+
+<!-- EMPTY -->
+<div id="empty" style="display:none">
+  <div class="e-icon">📂</div>
+  <p>No hay imágenes. Agrega algunas para comenzar.</p>
+</div>
+
+<!-- PROGRESS OVERLAY -->
+<div id="progressWrap">
+  <p id="progressMsg">Generando PDF…</p>
+  <div id="progressBar"><div id="progressFill"></div></div>
+  <div id="progressLabel">0 / 0</div>
+</div>
+
+<script>
+let images = [];
+let idCounter = 0;
+
+// ── FILE INPUT ─────────────────────────────────────────────
+document.getElementById('fileInput').addEventListener('change', e => {
+  loadFiles([...e.target.files]);
+  e.target.value = '';
+});
+
+// ── DROP ZONE ─────────────────────────────────────────────
+const dropzone = document.getElementById('dropzone');
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag-over'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-over'));
+dropzone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropzone.classList.remove('drag-over');
+  loadFiles([...e.dataTransfer.files].filter(f => f.type.startsWith('image/')));
+});
+
+document.body.addEventListener('dragover', e => e.preventDefault());
+document.body.addEventListener('drop', e => {
+  e.preventDefault();
+  const files = [...e.dataTransfer.files].filter(f => f.type.startsWith('image/'));
+  if (files.length) loadFiles(files);
+});
+
+// ── LOAD ──────────────────────────────────────────────────
+function loadFiles(files) {
+  Promise.all(files.map(f => new Promise(res => {
+    const r = new FileReader();
+    r.onload = ev => res({ id: idCounter++, name: f.name, dataUrl: ev.target.result });
+    r.readAsDataURL(f);
+  }))).then(items => { images.push(...items); render(); });
+}
+
+// ── MOVE ──────────────────────────────────────────────────
+function moveImage(id, dir) {
+  const idx = images.findIndex(x => x.id === id);
+  const newIdx = idx + dir;
+  if (idx < 0 || newIdx < 0 || newIdx >= images.length) return;
+  [images[idx], images[newIdx]] = [images[newIdx], images[idx]];
+  render();
+  requestAnimationFrame(() => {
+    const cards = document.querySelectorAll('.card');
+    if (cards[newIdx]) cards[newIdx].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  });
+}
+
+function moveToStart(id) {
+  const idx = images.findIndex(x => x.id === id);
+  if (idx <= 0) return;
+  images.unshift(...images.splice(idx, 1));
+  render();
+}
+
+function moveToEnd(id) {
+  const idx = images.findIndex(x => x.id === id);
+  if (idx < 0 || idx === images.length - 1) return;
+  images.push(...images.splice(idx, 1));
+  render();
+}
+
+function removeImage(id) {
+  images = images.filter(x => x.id !== id);
+  render();
+}
+
+function clearAll() {
+  if (!images.length) return;
+  if (confirm('¿Eliminar todas las imágenes?')) { images = []; render(); }
+}
+
+// ── RENDER ────────────────────────────────────────────────
+function render() {
+  const grid     = document.getElementById('grid');
+  const empty    = document.getElementById('empty');
+  const countBar = document.getElementById('countBar');
+  const btnGen   = document.getElementById('btnGenerate');
+  const dz       = document.getElementById('dropzone');
+
+  grid.innerHTML = '';
+
+  if (!images.length) {
+    empty.style.display = 'flex';
+    countBar.style.display = 'none';
+    dz.style.display = 'block';
+    btnGen.disabled = true;
+    return;
+  }
+
+  empty.style.display = 'none';
+  countBar.style.display = 'flex';
+  dz.style.display = 'none';
+  document.getElementById('countNum').textContent = images.length;
+  btnGen.disabled = false;
+
+  images.forEach((img, i) => {
+    const first = i === 0;
+    const last  = i === images.length - 1;
+    const card  = document.createElement('div');
+    card.className = 'card';
+
+    card.innerHTML = `
+      <div class="card-badge">${i + 1}</div>
+      <img src="${img.dataUrl}" alt="${img.name}" loading="lazy">
+      <div class="card-footer">
+        <div class="card-name" title="${img.name}">${img.name}</div>
+        <div class="card-controls">
+          <button class="ctrl-btn" title="Al inicio"      onclick="moveToStart(${img.id})"   ${first ? 'disabled' : ''}>⏮</button>
+          <button class="ctrl-btn" title="Mover atrás"    onclick="moveImage(${img.id}, -1)" ${first ? 'disabled' : ''}>◀</button>
+          <button class="ctrl-btn" title="Mover adelante" onclick="moveImage(${img.id},  1)" ${last  ? 'disabled' : ''}>▶</button>
+          <button class="ctrl-btn" title="Al final"       onclick="moveToEnd(${img.id})"     ${last  ? 'disabled' : ''}>⏭</button>
+          <button class="ctrl-btn danger" title="Eliminar" onclick="removeImage(${img.id})">✕</button>
+        </div>
+      </div>`;
+
+    grid.appendChild(card);
+  });
+}
+
+// ── GENERATE PDF ──────────────────────────────────────────
+async function generatePDF() {
+  if (!images.length) return;
+
+  const perPage  = parseInt(document.getElementById('perPage').value);
+  const marginMm = parseFloat(document.getElementById('margin').value) || 0;
+  const gapMm    = parseFloat(document.getElementById('gap').value)    || 0;
+  const showNums = document.getElementById('chkNumbers').checked;
+  const contain  = document.getElementById('chkFit').checked;
+
+  const PW = 215.9, PH = 279.4; // Letter in mm
+
+  const colsRows = { 1:[1,1], 2:[1,2], 4:[2,2], 6:[2,3], 9:[3,3] };
+  const [cols, rows] = colsRows[perPage] || [2,2];
+
+  const footH   = showNums ? 10 : 0;
+  const usableW = PW - 2*marginMm - (cols - 1)*gapMm;
+  const usableH = PH - 2*marginMm - (rows - 1)*gapMm - footH;
+  const cellW   = usableW / cols;
+  const cellH   = usableH / rows;
+
+  const wrap  = document.getElementById('progressWrap');
+  const fill  = document.getElementById('progressFill');
+  const label = document.getElementById('progressLabel');
+  const msg   = document.getElementById('progressMsg');
+  wrap.classList.add('show');
+  msg.textContent = 'Generando PDF…';
+  await sleep(40);
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'letter', orientation: 'portrait' });
+
+  const total = images.length;
+  let done = 0;
+
+  for (let p = 0; p < Math.ceil(total / perPage); p++) {
+    if (p > 0) doc.addPage();
+    const slice = images.slice(p * perPage, (p + 1) * perPage);
+
+    for (let i = 0; i < slice.length; i++) {
+      const img  = slice[i];
+      const col  = i % cols;
+      const row  = Math.floor(i / cols);
+      const x    = marginMm + col * (cellW + gapMm);
+      const y    = marginMm + row * (cellH + gapMm);
+      const el   = await loadImage(img.dataUrl);
+      const iR   = el.naturalWidth / el.naturalHeight;
+      const cR   = cellW / cellH;
+
+      let dx = x, dy = y, dw = cellW, dh = cellH;
+      if (contain) {
+        if (iR > cR) { dw = cellW; dh = cellW / iR; dy = y + (cellH - dh) / 2; }
+        else         { dh = cellH; dw = cellH * iR;  dx = x + (cellW - dw) / 2; }
+      }
+
+      doc.addImage(img.dataUrl, guessFormat(img.dataUrl), dx, dy, dw, dh);
+      done++;
+      fill.style.width = Math.round((done / total) * 100) + '%';
+      label.textContent = `${done} / ${total} imágenes`;
+      await sleep(0);
+    }
+
+    if (showNums) {
+      const tot = Math.ceil(total / perPage);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(140, 140, 140);
+      doc.text(`${p + 1} / ${tot}`, PW / 2, PH - 4, { align: 'center' });
+    }
+  }
+
+  msg.textContent = '¡Listo! Descargando…';
+  await sleep(300);
+  doc.save('imagenes.pdf');
+  wrap.classList.remove('show');
+  fill.style.width = '0%';
+}
+
+// ── HELPERS ───────────────────────────────────────────────
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function loadImage(src) {
+  return new Promise(res => {
+    const img = new Image();
+    img.onload = () => res(img);
+    img.src = src;
+  });
+}
+
+function guessFormat(d) {
+  if (d.startsWith('data:image/png'))  return 'PNG';
+  if (d.startsWith('data:image/webp')) return 'WEBP';
+  if (d.startsWith('data:image/gif'))  return 'GIF';
+  return 'JPEG';
+}
+
+render();
+</script>
+</body>
+</html>

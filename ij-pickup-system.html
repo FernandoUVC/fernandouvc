@@ -1,0 +1,1612 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IJ Cancún — Pick-up System</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #C9A84C;
+    --gold-light: #E8D49A;
+    --gold-dark: #9B7A2F;
+    --ink: #111118;
+    --ink-soft: #3A3A45;
+    --surface: #FAFAF8;
+    --panel: #FFFFFF;
+    --border: #E8E4DC;
+    --confirmed: #1A7A4A;
+    --confirmed-bg: #E8F5EE;
+    --pending: #8A6200;
+    --pending-bg: #FFF8E1;
+    --danger: #9B2020;
+    --danger-bg: #FFF0F0;
+    --radius: 10px;
+    --shadow: 0 2px 16px rgba(0,0,0,0.07);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--surface);
+    color: var(--ink);
+    min-height: 100vh;
+    padding-bottom: 40px;
+  }
+
+  /* ─── HEADER ─── */
+  header {
+    background: var(--ink);
+    color: white;
+    padding: 20px 20px 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 2px solid var(--gold);
+  }
+  .header-inner {
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .header-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.25rem;
+    color: var(--gold-light);
+    letter-spacing: 0.5px;
+  }
+  .header-sub {
+    font-size: 0.72rem;
+    color: #888;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+  .live-clock {
+    font-family: 'DM Mono', monospace;
+    font-size: 1.1rem;
+    color: var(--gold);
+    background: rgba(201,168,76,0.1);
+    border: 1px solid var(--gold-dark);
+    padding: 5px 12px;
+    border-radius: 6px;
+    letter-spacing: 1px;
+  }
+
+  /* ─── TABS ─── */
+  .tabs {
+    display: flex;
+    background: var(--ink);
+    border-bottom: 2px solid var(--gold);
+    max-width: 100%;
+    overflow-x: auto;
+  }
+  .tab {
+    flex: 1;
+    padding: 12px 10px;
+    text-align: center;
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: #777;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-bottom: 3px solid transparent;
+    white-space: nowrap;
+  }
+  .tab.active {
+    color: var(--gold-light);
+    border-bottom-color: var(--gold);
+  }
+
+  /* ─── MAIN LAYOUT ─── */
+  .main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 16px;
+  }
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* ─── CARDS ─── */
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+  }
+  .card-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem;
+    color: var(--ink);
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .card-title span {
+    display: block;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.7rem;
+    color: #999;
+    font-weight: 400;
+    margin-top: 2px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  /* ─── FLEET GRID ─── */
+  .fleet-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .van-chip {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    text-align: center;
+    position: relative;
+  }
+  .van-chip.active-van { border-color: var(--gold); background: #FFFDF5; }
+  .van-chip .van-name {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--ink);
+  }
+  .van-chip .van-cap {
+    font-size: 0.7rem;
+    color: #999;
+    margin-top: 2px;
+  }
+  .van-chip .van-used {
+    font-size: 0.75rem;
+    color: var(--gold-dark);
+    font-weight: 500;
+    margin-top: 4px;
+  }
+  .van-chip .van-pct {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-top: 8px;
+    overflow: hidden;
+  }
+  .van-chip .van-pct-fill {
+    height: 100%;
+    background: var(--gold);
+    transition: width 0.4s;
+  }
+  .van-chip .van-delete {
+    position: absolute;
+    top: 4px; right: 6px;
+    font-size: 0.65rem;
+    color: #ccc;
+    cursor: pointer;
+    background: none;
+    border: none;
+  }
+  .van-chip .van-delete:hover { color: var(--danger); }
+
+  .add-van-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .add-van-row input {
+    flex: 1;
+    min-width: 80px;
+  }
+
+  /* ─── FORM ELEMENTS ─── */
+  label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: #888;
+    margin-bottom: 5px;
+  }
+  input, select {
+    width: 100%;
+    padding: 11px 13px;
+    border: 1.5px solid var(--border);
+    border-radius: 7px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    color: var(--ink);
+    background: var(--surface);
+    transition: border-color 0.2s;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+  input:focus, select:focus {
+    outline: none;
+    border-color: var(--gold);
+    background: #FFFDF8;
+  }
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .form-row.single { grid-template-columns: 1fr; }
+  @media(max-width:480px) { .form-row { grid-template-columns: 1fr; } }
+
+  /* ─── SUGGESTION BOX ─── */
+  .suggestion {
+    background: var(--pending-bg);
+    border-left: 4px solid var(--gold);
+    border-radius: 0 7px 7px 0;
+    padding: 12px 14px;
+    font-size: 0.83rem;
+    color: var(--pending);
+    margin: 12px 0;
+    display: none;
+    line-height: 1.5;
+  }
+  .suggestion strong { display: block; margin-bottom: 4px; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px; }
+  .suggestion-options { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .sug-btn {
+    background: white;
+    border: 1.5px solid var(--gold);
+    color: var(--gold-dark);
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .sug-btn:hover { background: var(--gold); color: white; }
+
+  /* ─── BUTTONS ─── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 12px 20px;
+    border-radius: 7px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    width: 100%;
+    margin-top: 4px;
+  }
+  .btn-primary { background: var(--ink); color: white; }
+  .btn-primary:hover { background: var(--gold-dark); }
+  .btn-gold { background: var(--gold); color: white; }
+  .btn-gold:hover { background: var(--gold-dark); }
+  .btn-outline {
+    background: transparent;
+    border: 1.5px solid var(--border);
+    color: var(--ink-soft);
+    margin-top: 0;
+    width: auto;
+    padding: 9px 14px;
+  }
+  .btn-outline:hover { border-color: var(--gold); color: var(--gold-dark); }
+  .btn-danger { background: var(--danger-bg); color: var(--danger); border: 1.5px solid #F5C0C0; }
+  .btn-danger:hover { background: var(--danger); color: white; }
+  .btn-sm { padding: 7px 12px; font-size: 0.78rem; margin-top: 0; width: auto; }
+
+  /* ─── STATS BAR ─── */
+  .stats-bar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  @media(max-width:500px) { .stats-bar { grid-template-columns: repeat(2, 1fr); } }
+  .stat-box {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 12px;
+    text-align: center;
+    box-shadow: var(--shadow);
+  }
+  .stat-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    color: var(--ink);
+    line-height: 1;
+  }
+  .stat-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #aaa;
+    margin-top: 4px;
+  }
+
+  /* ─── TIMELINE / OPS TABLE ─── */
+  .ops-list { display: flex; flex-direction: column; gap: 10px; }
+  .ops-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 9px;
+    padding: 14px 16px;
+    display: grid;
+    grid-template-columns: 60px 1fr auto;
+    gap: 12px;
+    align-items: center;
+    transition: border-color 0.2s;
+  }
+  .ops-card.confirmed { border-left: 4px solid var(--confirmed); background: var(--confirmed-bg); }
+  .ops-card.anchor { border-left: 4px solid var(--gold); background: #FFFDF5; }
+  .ops-card.pending { border-left: 4px solid #CCA000; }
+
+  .ops-time {
+    text-align: center;
+  }
+  .ops-pickup {
+    font-family: 'DM Mono', monospace;
+    font-size: 1.05rem;
+    font-weight: 500;
+    color: var(--ink);
+  }
+  .ops-depart {
+    font-size: 0.65rem;
+    color: #999;
+    margin-top: 2px;
+  }
+  .ops-hotel {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--ink);
+  }
+  .ops-meta {
+    font-size: 0.75rem;
+    color: #777;
+    margin-top: 3px;
+  }
+  .ops-badge {
+    display: inline-block;
+    padding: 3px 9px;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .badge-confirmed { background: var(--confirmed-bg); color: var(--confirmed); }
+  .badge-anchor { background: #FFF3D6; color: var(--gold-dark); }
+  .badge-pending { background: var(--pending-bg); color: var(--pending); }
+
+  .ops-right { text-align: right; }
+  .ops-van {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--gold-dark);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .ops-pax {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--ink);
+    margin-top: 2px;
+  }
+  .ops-pax small { font-size: 0.65rem; color: #aaa; font-weight: 400; }
+
+  .ops-delete {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #ccc;
+    font-size: 0.9rem;
+    padding: 4px;
+    transition: color 0.2s;
+  }
+  .ops-delete:hover { color: var(--danger); }
+
+  /* ─── LOG ─── */
+  .log-box {
+    background: #111118;
+    border-radius: 8px;
+    padding: 14px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: #6FCF97;
+    height: 110px;
+    overflow-y: auto;
+    line-height: 1.6;
+  }
+  .log-line { color: #aaa; }
+  .log-line.info { color: #6FCF97; }
+  .log-line.warn { color: var(--gold); }
+  .log-line.err { color: #EB5757; }
+
+  /* ─── HOTEL DISTANCES ─── */
+  .hotel-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 10px;
+  }
+  .hotel-info-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+  }
+  .hotel-info-box h4 { font-size: 0.82rem; font-weight: 600; color: var(--ink); }
+  .hotel-info-box p { font-size: 0.72rem; color: #888; margin-top: 4px; line-height: 1.5; }
+  .hotel-dist { font-family: 'DM Mono', monospace; font-size: 0.9rem; color: var(--gold-dark); font-weight: 500; margin-top: 6px; }
+
+  .empty-state {
+    text-align: center;
+    padding: 30px 20px;
+    color: #bbb;
+    font-size: 0.85rem;
+  }
+  .empty-state .big { font-size: 2rem; margin-bottom: 8px; }
+
+  .capacity-bar {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-top: 8px;
+    overflow: hidden;
+  }
+  .capacity-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold-dark), var(--gold));
+    border-radius: 2px;
+    transition: width 0.5s ease;
+  }
+  .capacity-fill.full { background: var(--danger); }
+
+  /* ─── SETTINGS ─── */
+  .settings-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .settings-row:last-child { border-bottom: none; }
+  .settings-label { font-size: 0.85rem; font-weight: 500; color: var(--ink); }
+  .settings-sub { font-size: 0.72rem; color: #aaa; margin-top: 2px; }
+  .settings-control { flex-shrink: 0; }
+  .settings-control input, .settings-control select { width: auto; min-width: 100px; }
+
+  hr { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div>
+      <div class="header-title">International Jewelry — Cancún</div>
+      <div class="header-sub">Sistema de Pick-up · Zona Hotelera</div>
+    </div>
+    <div class="live-clock" id="clock">--:--</div>
+  </div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('ops')">📋 Operaciones</div>
+  <div class="tab" onclick="switchTab('request')">➕ Nueva Solicitud</div>
+  <div class="tab" onclick="switchTab('fleet')">🚐 Flota</div>
+  <div class="tab" onclick="switchTab('config')">⚙️ Config</div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     TAB: OPERACIONES
+══════════════════════════════════════════════ -->
+<div class="main">
+<section class="section active" id="tab-ops">
+
+  <div class="stats-bar">
+    <div class="stat-box">
+      <div class="stat-num" id="stat-tours">0</div>
+      <div class="stat-label">Tours Hoy</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" id="stat-pax">0</div>
+      <div class="stat-label">Pax Total</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" id="stat-vans-used">0</div>
+      <div class="stat-label">Vans Activas</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" id="stat-cap">—</div>
+      <div class="stat-label">Cap. Usada</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title" style="display:flex;justify-content:space-between;align-items:flex-start;">
+      <div>Dashboard en Vivo <span>Ordenado por hora de pick-up</span></div>
+      <button class="btn btn-outline btn-sm" style="margin-top:0;font-size:0.7rem;padding:5px 10px;" onclick="exportState()">📤 Exportar</button>
+    </div>
+    <div class="ops-list" id="ops-list">
+      <div class="empty-state">
+        <div class="big">🚐</div>
+        Sin servicios programados hoy.<br>Usa <strong>Nueva Solicitud</strong> para comenzar.
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Log de Sistema <span>Actividad en tiempo real</span></div>
+    <div class="log-box" id="log-box">
+      <div class="log-line info">> Sistema IJ Pick-up v2.0 — listo.</div>
+      <div class="log-line">> Base: Internacional Jewelry, KM 12.5, Zona Hotelera Cancún.</div>
+    </div>
+  </div>
+
+</section>
+
+<!-- ══════════════════════════════════════════════
+     TAB: NUEVA SOLICITUD
+══════════════════════════════════════════════ -->
+<section class="section" id="tab-request">
+
+  <div class="card">
+    <div class="card-title">Registrar Pick-up <span>El sistema sugiere horarios según disponibilidad</span></div>
+
+    <div class="form-row">
+      <div>
+        <label>Hotel</label>
+        <select id="req-hotel" onchange="onHotelOrPaxChange()">
+          <option value="">— Selecciona hotel —</option>
+          <option value="Secrets The Vine" data-drive="12" data-buffer="5">Secrets The Vine</option>
+          <option value="Dreams Playa Mujeres" data-drive="50" data-buffer="10">Dreams Playa Mujeres</option>
+          <option value="Breathless Riviera" data-drive="40" data-buffer="8">Breathless Riviera</option>
+          <option value="Hard Rock Hotel" data-drive="25" data-buffer="7">Hard Rock Hotel</option>
+          <option value="Live Aqua" data-drive="20" data-buffer="6">Live Aqua</option>
+        </select>
+      </div>
+      <div>
+        <label>Núm. de Pax</label>
+        <input type="number" id="req-pax" value="2" min="1" max="30" onchange="onHotelOrPaxChange()">
+      </div>
+    </div>
+
+    <!-- Sugerencias dinámicas de horario -->
+    <div id="slot-suggestion" class="suggestion">
+      <strong>⚡ Horarios disponibles para tu solicitud</strong>
+      <div id="slot-options"></div>
+    </div>
+
+    <div class="form-row">
+      <div>
+        <label>Horario de Pick-up Solicitado</label>
+        <input type="time" id="req-time" value="09:00" step="900">
+      </div>
+      <div>
+        <label>Nombre / Referencia</label>
+        <input type="text" id="req-name" placeholder="Ej: Smith x2 — Room 304">
+      </div>
+    </div>
+
+    <div id="req-suggestion" class="suggestion"></div>
+
+    <button class="btn btn-primary" id="confirm-btn" onclick="submitRequest()">✓ Confirmar Solicitud</button>
+  </div>
+
+  <!-- Info de hoteles -->
+  <div class="card">
+    <div class="card-title">Distancias desde IJ Cancún <span>KM 12.5 Zona Hotelera</span></div>
+    <div class="hotel-info-grid">
+      <div class="hotel-info-box">
+        <h4>Secrets The Vine</h4>
+        <p>KM 14.5 · Zona Hotelera</p>
+        <div class="hotel-dist">~10–15 min</div>
+      </div>
+      <div class="hotel-info-box">
+        <h4>Live Aqua</h4>
+        <p>KM 16 · Zona Hotelera</p>
+        <div class="hotel-dist">~18–22 min</div>
+      </div>
+      <div class="hotel-info-box">
+        <h4>Hard Rock Hotel</h4>
+        <p>KM 14 · Zona Hotelera</p>
+        <div class="hotel-dist">~22–28 min</div>
+      </div>
+      <div class="hotel-info-box">
+        <h4>Breathless Riviera</h4>
+        <p>Puerto Morelos</p>
+        <div class="hotel-dist">~38–45 min</div>
+      </div>
+      <div class="hotel-info-box">
+        <h4>Dreams Playa Mujeres</h4>
+        <p>Playa Mujeres</p>
+        <div class="hotel-dist">~48–55 min</div>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<!-- ══════════════════════════════════════════════
+     TAB: FLOTA
+══════════════════════════════════════════════ -->
+<section class="section" id="tab-fleet">
+
+  <div class="card">
+    <div class="card-title">Vans Disponibles Hoy <span>Edita capacidad o agrega/quita unidades</span></div>
+    <div class="fleet-grid" id="fleet-grid"></div>
+    <hr>
+    <div class="add-van-row">
+      <div style="flex:1;min-width:80px">
+        <label>Nombre de Van</label>
+        <input type="text" id="new-van-name" placeholder="Ej: Van C">
+      </div>
+      <div style="width:90px">
+        <label>Capacidad</label>
+        <input type="number" id="new-van-cap" value="8" min="1" max="30">
+      </div>
+      <div style="padding-top:20px">
+        <button class="btn btn-gold btn-sm" onclick="addVan()">+ Agregar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Resumen de Capacidad <span>Pax confirmados vs. capacidad total</span></div>
+    <div id="capacity-summary" style="font-size:0.88rem; color:#666;">Cargando...</div>
+    <div class="capacity-bar" style="margin-top:12px; height:8px;">
+      <div class="capacity-fill" id="total-cap-bar" style="width:0%"></div>
+    </div>
+    <div style="font-size:0.72rem; color:#aaa; margin-top:6px;" id="cap-label">0 de 0 pax asignados</div>
+  </div>
+
+</section>
+
+<!-- ══════════════════════════════════════════════
+     TAB: CONFIG
+══════════════════════════════════════════════ -->
+<section class="section" id="tab-config">
+  <div class="card">
+    <div class="card-title">Configuración del Sistema</div>
+
+    <div class="settings-row">
+      <div>
+        <div class="settings-label">Horario de apertura de tienda</div>
+        <div class="settings-sub">Ninguna van sale antes de este horario</div>
+      </div>
+      <div class="settings-control">
+        <input type="time" id="cfg-open" value="09:00">
+      </div>
+    </div>
+
+    <div class="settings-row">
+      <div>
+        <div class="settings-label">Horario de cierre de tienda</div>
+        <div class="settings-sub">Último pick-up permitido</div>
+      </div>
+      <div class="settings-control">
+        <input type="time" id="cfg-close" value="18:00">
+      </div>
+    </div>
+
+    <div class="settings-row">
+      <div>
+        <div class="settings-label">Buffer mínimo entre salidas</div>
+        <div class="settings-sub">Minutos mínimos entre vans saliendo</div>
+      </div>
+      <div class="settings-control">
+        <input type="number" id="cfg-buffer" value="15" min="5" max="60" style="width:80px">
+      </div>
+    </div>
+
+    <div class="settings-row">
+      <div>
+        <div class="settings-label">Margen para agrupar pax</div>
+        <div class="settings-sub">Diferencia máx. (min) para juntar en misma van</div>
+      </div>
+      <div class="settings-control">
+        <input type="number" id="cfg-merge" value="30" min="5" max="90" style="width:80px">
+      </div>
+    </div>
+
+  </div>
+
+  <div class="card">
+    <div class="card-title">Datos del Día</div>
+    <div class="settings-row">
+      <div>
+        <div class="settings-label">Exportar estado actual</div>
+        <div class="settings-sub">Descarga un archivo JSON con todas las reservas del día</div>
+      </div>
+      <div class="settings-control">
+        <button class="btn btn-outline btn-sm" onclick="exportState()">📤 Exportar</button>
+      </div>
+    </div>
+    <div class="settings-row">
+      <div>
+        <div class="settings-label">Reiniciar todos los servicios</div>
+        <div class="settings-sub">Limpia las reservas del día para empezar de cero</div>
+      </div>
+      <div class="settings-control">
+        <button class="btn btn-danger btn-sm" onclick="resetDay()">🗑 Reiniciar día</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+</div><!-- end .main -->
+
+<script>
+// ════════════════════════════════════════════════════════════════
+//  STATE — Trip-centric model
+//
+//  A Trip is a single van outing from IJ. It contains Stops (ordered
+//  list of hotels to visit). Each Stop contains Bookings (guest groups
+//  being picked up at that hotel). Capacity is measured at the Trip
+//  level — total pax across all bookings in all stops must fit the van.
+//
+//  This replaces the old "bookings flat array" model where concat stops
+//  were individual bookings with matching departTime — which caused
+//  capacity miscounts and duplicate trip creation.
+// ════════════════════════════════════════════════════════════════
+
+let state = {
+  trips: [],           // array of Trip objects (see structure below)
+  vans: [
+    { id: 'van-a', name: 'Van A', capacity: 10 },
+    { id: 'van-b', name: 'Van B', capacity: 10 },
+  ],
+  nextTripId: 1,
+  nextBookingId: 1,
+  nextRequestNum: 1,
+};
+
+/**
+ * Trip structure:
+ * {
+ *   id: number,
+ *   vanId: string,
+ *   departIJ: "HH:MM",            // time van leaves IJ
+ *   returnIJ: "HH:MM",            // time van returns to IJ (calculated)
+ *   stops: [
+ *     {
+ *       id: number,
+ *       hotel: string,
+ *       pickupTime: "HH:MM",      // scheduled pick-up at this hotel
+ *       bookings: [
+ *         { id, name, pax, createdAt }
+ *       ]
+ *     }
+ *   ],
+ *   createdAt: string
+ * }
+ */
+
+// ════════════════════════════════════════════════════════════════
+//  HOTELS & CONSTANTS
+// ════════════════════════════════════════════════════════════════
+
+const HOTELS = {
+  'Secrets The Vine':      { drive: 12, buffer: 5,  returnDrive: 12, zone: 'zona-hotelera-south', maxRideExtra: 28 },
+  'Dreams Playa Mujeres':  { drive: 50, buffer: 10, returnDrive: 50, zone: 'playa-mujeres',       maxRideExtra:  0 },
+  'Breathless Riviera':    { drive: 40, buffer: 8,  returnDrive: 40, zone: 'riviera',              maxRideExtra:  5 },
+  'Hard Rock Hotel':       { drive: 25, buffer: 7,  returnDrive: 25, zone: 'zona-hotelera-north',  maxRideExtra: 20 },
+  'Live Aqua':             { drive: 20, buffer: 6,  returnDrive: 20, zone: 'zona-hotelera-north',  maxRideExtra: 25 },
+};
+
+const HOTEL_WAIT_TIME = 15;
+const REFRESH_TIME    = 30;
+
+const BETWEEN_HOTELS = {
+  'Secrets The Vine':     { 'Hard Rock Hotel': 8,  'Live Aqua': 10, 'Breathless Riviera': 30, 'Dreams Playa Mujeres': 55 },
+  'Hard Rock Hotel':      { 'Secrets The Vine': 8, 'Live Aqua': 6,  'Breathless Riviera': 28, 'Dreams Playa Mujeres': 52 },
+  'Live Aqua':            { 'Secrets The Vine': 10,'Hard Rock Hotel': 6, 'Breathless Riviera': 25, 'Dreams Playa Mujeres': 50 },
+  'Breathless Riviera':   { 'Secrets The Vine': 30,'Hard Rock Hotel': 28,'Live Aqua': 25, 'Dreams Playa Mujeres': 35 },
+  'Dreams Playa Mujeres': { 'Secrets The Vine': 55,'Hard Rock Hotel': 52,'Live Aqua': 50, 'Breathless Riviera': 35 },
+};
+
+const CORRIDORS = {
+  sur:   ['Secrets The Vine', 'Breathless Riviera'],
+  norte: ['Live Aqua', 'Hard Rock Hotel', 'Dreams Playa Mujeres'],
+};
+
+function corridorOf(hotel) {
+  for (const [name, hotels] of Object.entries(CORRIDORS)) {
+    if (hotels.includes(hotel)) return name;
+  }
+  return null;
+}
+function sameCorridorAs(a, b) { return corridorOf(a) === corridorOf(b); }
+function distFromIJ(hotel) { return (HOTELS[hotel] || {}).drive || 99; }
+
+// ════════════════════════════════════════════════════════════════
+//  TIME HELPERS
+// ════════════════════════════════════════════════════════════════
+
+function toMinutes(timeStr) { const [h,m] = timeStr.split(':').map(Number); return h*60+m; }
+function fromMinutes(mins) {
+  const h = Math.floor(mins / 60) % 24;
+  const m = ((mins % 60) + 60) % 60;
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+}
+
+// ════════════════════════════════════════════════════════════════
+//  ROUTE CALCULATION
+// ════════════════════════════════════════════════════════════════
+
+/**
+ * Given ordered hotels and a departure time, calculate pickup times and return.
+ * Accounts for: drive out + hotel wait between stops + return drive.
+ */
+function calcRoute(orderedHotels, departIJmins) {
+  let cursor = departIJmins;
+  const stops = [];
+  for (let i = 0; i < orderedHotels.length; i++) {
+    const hotel = orderedHotels[i];
+    const info  = HOTELS[hotel] || { drive: 20, returnDrive: 20 };
+    const drive = i === 0 ? info.drive : ((BETWEEN_HOTELS[orderedHotels[i-1]] || {})[hotel] || 20);
+    cursor += drive;
+    stops.push({ hotel, pickupAt: cursor });
+    if (i < orderedHotels.length - 1) cursor += HOTEL_WAIT_TIME;
+  }
+  const lastHotel = orderedHotels[orderedHotels.length - 1];
+  const returnDrive = (HOTELS[lastHotel] || {}).returnDrive || 20;
+  const returnToIJ = cursor + HOTEL_WAIT_TIME + returnDrive;
+  return { departIJ: departIJmins, stops, returnToIJ };
+}
+
+/**
+ * Optimize stop order: farthest first so return trip passes closer ones.
+ */
+function optimizeStopOrder(hotels) {
+  return [...hotels].sort((a,b) => distFromIJ(b) - distFromIJ(a));
+}
+
+/**
+ * Recalculate a trip's stop pickupTimes and returnIJ based on current stops.
+ * Called whenever a stop is added or removed from a trip.
+ */
+function recalcTrip(trip) {
+  if (trip.stops.length === 0) return; // empty trip — will be cleaned up
+  const hotels = trip.stops.map(s => s.hotel);
+  const ordered = optimizeStopOrder(hotels);
+  const route = calcRoute(ordered, toMinutes(trip.departIJ));
+
+  // Update stop pickupTimes based on optimized order
+  trip.stops = ordered.map(hotel => {
+    const originalStop = trip.stops.find(s => s.hotel === hotel);
+    const routeStop = route.stops.find(r => r.hotel === hotel);
+    return {
+      ...originalStop,
+      pickupTime: fromMinutes(routeStop.pickupAt),
+    };
+  });
+  trip.returnIJ = fromMinutes(route.returnToIJ);
+}
+
+// ════════════════════════════════════════════════════════════════
+//  TRIP HELPERS
+// ════════════════════════════════════════════════════════════════
+
+function tripPax(trip) {
+  return trip.stops.reduce((sum, stop) =>
+    sum + stop.bookings.reduce((a,b) => a + b.pax, 0), 0);
+}
+function tripRemainingCapacity(trip) {
+  const van = state.vans.find(v => v.id === trip.vanId);
+  if (!van) return 0;
+  return van.capacity - tripPax(trip);
+}
+function tripHotels(trip) { return trip.stops.map(s => s.hotel); }
+
+/**
+ * Return time van becomes free for next outing after this trip.
+ * (returnIJ + refresh time)
+ */
+function tripAvailableAt(trip) {
+  return toMinutes(trip.returnIJ) + REFRESH_TIME;
+}
+
+/**
+ * When is this van next free? Minimum across all its trips.
+ * If the van has no trips, it's free at time 0.
+ */
+function vanAvailableAt(vanId) {
+  const vanTrips = state.trips.filter(t => t.vanId === vanId);
+  if (vanTrips.length === 0) return 0;
+  // Van is free after its latest trip ends
+  return Math.max(...vanTrips.map(t => tripAvailableAt(t)));
+}
+
+/**
+ * Find a trip on this van whose stops list includes the hotel AND pickup time is close.
+ * Used for "join existing trip" logic.
+ */
+function findJoinableTrip(vanId, hotel, pickupTime) {
+  return state.trips.find(t =>
+    t.vanId === vanId &&
+    t.stops.some(s => s.hotel === hotel && Math.abs(toMinutes(s.pickupTime) - toMinutes(pickupTime)) <= 20)
+  );
+}
+
+/**
+ * Does this trip's departIJ conflict with another trip on the same van?
+ * (Must leave time for refresh between trips)
+ */
+function canVanTakeTrip(vanId, departIJmins, returnIJmins) {
+  const vanTrips = state.trips.filter(t => t.vanId === vanId);
+  for (const t of vanTrips) {
+    const tDep = toMinutes(t.departIJ);
+    const tRet = toMinutes(t.returnIJ);
+    // Conflict if overlapping or within refresh window
+    if (!(returnIJmins + REFRESH_TIME <= tDep || departIJmins >= tRet + REFRESH_TIME)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+// ════════════════════════════════════════════════════════════════
+//  CLOCK & UI
+// ════════════════════════════════════════════════════════════════
+
+function updateClock() {
+  document.getElementById('clock').textContent =
+    new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+function switchTab(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  const idx = ['ops','request','fleet','config'].indexOf(id);
+  document.querySelectorAll('.tab')[idx].classList.add('active');
+  if (id === 'ops')   renderOps();
+  if (id === 'fleet') renderFleet();
+}
+
+function log(msg, type='info') {
+  const box = document.getElementById('log-box');
+  const d = document.createElement('div');
+  d.className = 'log-line ' + type;
+  const t = new Date().toLocaleTimeString('es-MX', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+  d.textContent = `> [${t}] ${msg}`;
+  box.insertBefore(d, box.firstChild);
+}
+
+function disableBtn(btn) { btn.disabled = true; btn.style.opacity = '0.4'; btn.style.cursor = 'not-allowed'; }
+function enableBtn(btn)  { btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer'; }
+
+// ════════════════════════════════════════════════════════════════
+//  SUGGESTION ENGINE
+//
+//  Three types of suggestions, in order of priority:
+//  1. CONCAT: add this hotel as a new stop to an existing trip (same corridor)
+//  2. JOIN: the hotel is already a stop on an existing trip, just add pax
+//  3. NEW: create a brand new trip for this hotel
+// ════════════════════════════════════════════════════════════════
+
+function findSuggestions(hotel, pax) {
+  const suggestions = { concat: [], join: [], new: [] };
+  const openMins  = toMinutes(document.getElementById('cfg-open').value  || '09:00');
+  const closeMins = toMinutes(document.getElementById('cfg-close').value || '18:00');
+
+  // ── 1. JOIN: hotel already a stop on an existing trip, and van has capacity
+  state.trips.forEach(trip => {
+    const van = state.vans.find(v => v.id === trip.vanId);
+    if (!van) return;
+    if (tripRemainingCapacity(trip) < pax) return;
+    trip.stops.forEach(stop => {
+      if (stop.hotel !== hotel) return;
+      suggestions.join.push({
+        tripId: trip.id, stopId: stop.id,
+        vanName: van.name, pickupTime: stop.pickupTime,
+        remaining: tripRemainingCapacity(trip),
+      });
+    });
+  });
+
+  // ── 2. CONCAT: add this hotel as a new stop to an existing trip
+  state.trips.forEach(trip => {
+    const van = state.vans.find(v => v.id === trip.vanId);
+    if (!van) return;
+    if (tripRemainingCapacity(trip) < pax) return;
+
+    // Skip if hotel is already a stop (that's a JOIN, already handled)
+    if (trip.stops.some(s => s.hotel === hotel)) return;
+
+    // All existing hotels must be same corridor as new hotel
+    if (!trip.stops.every(s => sameCorridorAs(s.hotel, hotel))) return;
+
+    // Simulate adding the new stop: recalculate the route with this hotel included
+    const newHotels = optimizeStopOrder([...tripHotels(trip), hotel]);
+    const newRoute = calcRoute(newHotels, toMinutes(trip.departIJ));
+    const newStopInRoute = newRoute.stops.find(s => s.hotel === hotel);
+    if (!newStopInRoute) return;
+
+    // Verify existing stops' times wouldn't drift too much (±10 min max)
+    let driftOk = true;
+    trip.stops.forEach(existingStop => {
+      const inNewRoute = newRoute.stops.find(r => r.hotel === existingStop.hotel);
+      if (!inNewRoute) { driftOk = false; return; }
+      if (Math.abs(inNewRoute.pickupAt - toMinutes(existingStop.pickupTime)) > 10) driftOk = false;
+    });
+    if (!driftOk) return;
+
+    suggestions.concat.push({
+      tripId: trip.id,
+      vanName: van.name,
+      newPickupTime: fromMinutes(newStopInRoute.pickupAt),
+      existingHotels: tripHotels(trip),
+      departIJ: trip.departIJ,
+      returnIJ: fromMinutes(newRoute.returnToIJ),
+      allHotelsOrdered: newHotels,
+      routeStr: newRoute.stops.map(s => `${s.hotel} ~${fromMinutes(s.pickupAt)}`).join(' → '),
+      remaining: tripRemainingCapacity(trip),
+    });
+  });
+
+  // ── 3. NEW: brand new trip — scan time slots
+  const info = HOTELS[hotel] || { drive: 20, buffer: 5 };
+  for (let slotMins = openMins; slotMins <= closeMins - 30; slotMins += 30) {
+    const slotTime = fromMinutes(slotMins);
+
+    // Skip if a JOIN or CONCAT already covers this pickup time ±20 min
+    const coveredByJoin = suggestions.join.some(s =>
+      Math.abs(toMinutes(s.pickupTime) - slotMins) <= 20);
+    const coveredByConcat = suggestions.concat.some(c =>
+      Math.abs(toMinutes(c.newPickupTime) - slotMins) <= 20);
+    if (coveredByJoin || coveredByConcat) continue;
+
+    const depMins = slotMins - info.drive - info.buffer;
+    if (depMins < openMins - 15) continue;
+
+    // Find a van that can do a new trip at this time
+    const availVan = state.vans.find(v => {
+      if (v.capacity < pax) return false;
+      const returnMins = slotMins + HOTEL_WAIT_TIME + info.returnDrive;
+      return canVanTakeTrip(v.id, depMins, returnMins);
+    });
+    if (!availVan) continue;
+
+    suggestions.new.push({
+      vanId: availVan.id,
+      vanName: availVan.name,
+      pickupTime: slotTime,
+      departIJ: fromMinutes(depMins),
+      remaining: availVan.capacity,
+    });
+    if (suggestions.new.length >= 4) break;
+  }
+
+  return suggestions;
+}
+
+// ════════════════════════════════════════════════════════════════
+//  FORM HANDLERS
+// ════════════════════════════════════════════════════════════════
+
+function onHotelOrPaxChange() {
+  const hotel = document.getElementById('req-hotel').value;
+  const pax   = parseInt(document.getElementById('req-pax').value) || 0;
+  const box   = document.getElementById('slot-suggestion');
+  const opts  = document.getElementById('slot-options');
+  const btn   = document.getElementById('confirm-btn');
+
+  window._pendingAction = null;
+  enableBtn(btn);
+
+  if (!hotel || pax < 1) { box.style.display = 'none'; return; }
+
+  const maxVanCap = state.vans.length > 0 ? Math.max(...state.vans.map(v => v.capacity)) : 0;
+  if (maxVanCap > 0 && pax > maxVanCap) {
+    box.style.display = 'block';
+    box.style.borderLeftColor = 'var(--danger)';
+    box.style.background = 'var(--danger-bg)';
+    opts.innerHTML = `<span style="color:var(--danger);font-weight:600;">
+      ⛔ ${pax} pax excede la capacidad máxima de cualquier van (${maxVanCap}).<br>
+      Divide la solicitud o agrega una van más grande en Flota.
+    </span>`;
+    disableBtn(btn);
+    return;
+  }
+
+  const s = findSuggestions(hotel, pax);
+  box.style.display = 'block';
+  box.style.borderLeftColor = 'var(--gold)';
+  box.style.background = 'var(--pending-bg)';
+
+  let html = '';
+
+  // 1st — CONCAT (most prominent)
+  if (s.concat.length > 0) {
+    html += `<div style="margin-bottom:10px;">
+      <div style="font-size:0.7rem;font-weight:700;color:var(--gold-dark);letter-spacing:0.8px;text-transform:uppercase;margin-bottom:6px;">
+        🔀 Viaje concatenado — opción más eficiente
+      </div>`;
+    s.concat.slice(0, 3).forEach((c, i) => {
+      html += `<button class="sug-btn" style="background:#FFFDF5;border:2px solid var(--gold);width:100%;text-align:left;margin-bottom:6px;padding:10px 12px;"
+        onclick="selectConcat(${c.tripId})">
+        <div style="font-weight:600;font-size:0.82rem;">🔀 ${c.vanName} — Pick-up ${hotel} ~${c.newPickupTime}</div>
+        <div style="font-size:0.7rem;color:#888;margin-top:3px;">Ruta: ${c.routeStr}</div>
+        <div style="font-size:0.7rem;color:var(--gold-dark);margin-top:2px;">Sale IJ: ${c.departIJ} · Regresa ~${c.returnIJ} · ${c.remaining} lugares disponibles</div>
+      </button>`;
+    });
+    html += `</div>`;
+  }
+
+  // 2nd — JOIN
+  if (s.join.length > 0) {
+    html += `<div style="margin-bottom:8px;">
+      <div style="font-size:0.7rem;font-weight:700;color:var(--confirmed);letter-spacing:0.8px;text-transform:uppercase;margin-bottom:4px;">
+        🔗 Unirse a viaje existente
+      </div>`;
+    s.join.slice(0, 3).forEach(j => {
+      html += `<button class="sug-btn" onclick="selectJoin(${j.tripId}, ${j.stopId})">
+        🔗 Unirse · ${j.pickupTime} · ${j.remaining} disponibles en ${j.vanName}
+      </button>`;
+    });
+    html += `</div>`;
+  }
+
+  // 3rd — NEW
+  if (s.new.length > 0) {
+    html += `<div>
+      <div style="font-size:0.7rem;font-weight:700;color:#aaa;letter-spacing:0.8px;text-transform:uppercase;margin-bottom:4px;">
+        🕐 Nuevo viaje independiente
+      </div>`;
+    s.new.forEach(n => {
+      html += `<button class="sug-btn" style="opacity:0.85;" onclick="selectNew('${n.vanId}','${n.pickupTime}')">
+        🕐 ${n.pickupTime} · ${n.vanName} (${n.remaining} disponibles)
+      </button>`;
+    });
+    html += `</div>`;
+  }
+
+  if (!html) {
+    html = `<span style="color:var(--danger);font-weight:600;">⛔ Sin opciones disponibles hoy para ${pax} pax en ${hotel}.</span>`;
+    disableBtn(btn);
+  }
+
+  opts.innerHTML = html;
+}
+
+function selectConcat(tripId) {
+  const trip = state.trips.find(t => t.id === tripId);
+  if (!trip) return;
+  const hotel = document.getElementById('req-hotel').value;
+  const pax   = parseInt(document.getElementById('req-pax').value) || 0;
+  const van   = state.vans.find(v => v.id === trip.vanId);
+
+  // Calculate where the new stop would be in the updated route
+  const newHotels = optimizeStopOrder([...tripHotels(trip), hotel]);
+  const newRoute  = calcRoute(newHotels, toMinutes(trip.departIJ));
+  const newStop   = newRoute.stops.find(s => s.hotel === hotel);
+
+  window._pendingAction = { type: 'concat', tripId, hotel, pax, newPickupTime: fromMinutes(newStop.pickupAt) };
+  document.getElementById('req-time').value = fromMinutes(newStop.pickupAt);
+
+  const box = document.getElementById('req-suggestion');
+  box.style.display = 'block';
+  box.style.borderLeftColor = 'var(--gold)';
+  box.style.background = '#FFFDF5';
+  const routeSteps = newRoute.stops.map(s =>
+    `<span style="color:var(--ink);font-weight:500;">${s.hotel}</span> ~${fromMinutes(s.pickupAt)}`
+  ).join(' <span style="color:#ccc;">→</span> ');
+  box.innerHTML = `<strong style="color:var(--gold-dark);">🔀 Viaje concatenado</strong><br>
+    <div style="font-size:0.8rem;margin-top:6px;line-height:1.7;">
+      <strong>${van.name}</strong> · Sale IJ: <strong>${trip.departIJ}</strong><br>
+      Ruta: ${routeSteps} → IJ ~${fromMinutes(newRoute.returnToIJ)}<br>
+      <span style="color:var(--gold-dark);">Pick-up de ${hotel}: ~${fromMinutes(newStop.pickupAt)}</span>
+    </div>`;
+  enableBtn(document.getElementById('confirm-btn'));
+}
+
+function selectJoin(tripId, stopId) {
+  const trip = state.trips.find(t => t.id === tripId);
+  if (!trip) return;
+  const stop = trip.stops.find(s => s.id === stopId);
+  if (!stop) return;
+  const hotel = document.getElementById('req-hotel').value;
+  const pax   = parseInt(document.getElementById('req-pax').value) || 0;
+  const van   = state.vans.find(v => v.id === trip.vanId);
+
+  window._pendingAction = { type: 'join', tripId, stopId, pax };
+  document.getElementById('req-time').value = stop.pickupTime;
+
+  const box = document.getElementById('req-suggestion');
+  box.style.display = 'block';
+  box.style.borderLeftColor = 'var(--confirmed)';
+  box.style.background = 'var(--confirmed-bg)';
+  box.innerHTML = `<strong style="color:var(--confirmed);">✅ Unirse a viaje existente</strong><br>
+    ${van.name} ya recoge en ${stop.hotel} a las <strong>${stop.pickupTime}</strong>.
+    Esta solicitud se añadirá al grupo. Quedarán <strong>${tripRemainingCapacity(trip) - pax}</strong> lugares libres tras esto.`;
+  enableBtn(document.getElementById('confirm-btn'));
+}
+
+function selectNew(vanId, pickupTime) {
+  const hotel = document.getElementById('req-hotel').value;
+  const pax   = parseInt(document.getElementById('req-pax').value) || 0;
+  const van   = state.vans.find(v => v.id === vanId);
+  const info  = HOTELS[hotel];
+  const depMins = toMinutes(pickupTime) - info.drive - info.buffer;
+
+  window._pendingAction = { type: 'new', vanId, pickupTime, hotel, pax };
+  document.getElementById('req-time').value = pickupTime;
+
+  const box = document.getElementById('req-suggestion');
+  box.style.display = 'block';
+  box.style.borderLeftColor = 'var(--gold)';
+  box.style.background = 'var(--pending-bg)';
+  box.innerHTML = `<strong>🆕 Nuevo viaje</strong><br>
+    ${van.name} saldrá de IJ a las <strong>${fromMinutes(depMins)}</strong> para recoger en ${hotel} a las ${pickupTime}.`;
+  enableBtn(document.getElementById('confirm-btn'));
+}
+
+// ════════════════════════════════════════════════════════════════
+//  SUBMIT
+// ════════════════════════════════════════════════════════════════
+
+function submitRequest() {
+  const hotel = document.getElementById('req-hotel').value;
+  const pax   = parseInt(document.getElementById('req-pax').value) || 0;
+  const name  = document.getElementById('req-name').value.trim() || `Solicitud #${state.nextRequestNum}`;
+
+  if (!hotel || pax < 1) { alert('Selecciona hotel y pax.'); return; }
+  const action = window._pendingAction;
+  if (!action) { alert('Selecciona un horario disponible primero.'); return; }
+
+  const booking = {
+    id: state.nextBookingId++,
+    name,
+    pax,
+    createdAt: new Date().toLocaleTimeString('es-MX', { hour:'2-digit', minute:'2-digit' }),
+  };
+
+  if (action.type === 'join') {
+    const trip = state.trips.find(t => t.id === action.tripId);
+    if (!trip) { alert('Viaje no encontrado.'); return; }
+    const stop = trip.stops.find(s => s.id === action.stopId);
+    if (!stop) { alert('Parada no encontrada.'); return; }
+    if (tripRemainingCapacity(trip) < pax) {
+      alert(`⛔ Ya no hay capacidad en este viaje (${tripRemainingCapacity(trip)} lugares libres).`);
+      return;
+    }
+    stop.bookings.push(booking);
+    log(`[JOIN] ${name} — ${stop.hotel} ${stop.pickupTime} | ${pax} pax | Trip #${trip.id}`, 'info');
+  }
+  else if (action.type === 'concat') {
+    const trip = state.trips.find(t => t.id === action.tripId);
+    if (!trip) { alert('Viaje no encontrado.'); return; }
+    if (tripRemainingCapacity(trip) < pax) {
+      alert(`⛔ Ya no hay capacidad en este viaje (${tripRemainingCapacity(trip)} lugares libres).`);
+      return;
+    }
+
+    // Add a new stop for this hotel, then recalculate the trip's route
+    const newStop = {
+      id: state.nextBookingId++, // reuse counter for stop IDs
+      hotel: action.hotel,
+      pickupTime: action.newPickupTime,
+      bookings: [booking],
+    };
+    trip.stops.push(newStop);
+    recalcTrip(trip);
+    log(`[CONCAT] ${name} — ${action.hotel} ~${newStop.pickupTime} | ${pax} pax | Trip #${trip.id} (${trip.stops.length} stops)`, 'info');
+  }
+  else if (action.type === 'new') {
+    const van  = state.vans.find(v => v.id === action.vanId);
+    const info = HOTELS[action.hotel];
+    const depMins    = toMinutes(action.pickupTime) - info.drive - info.buffer;
+    const returnMins = toMinutes(action.pickupTime) + HOTEL_WAIT_TIME + info.returnDrive;
+
+    if (!canVanTakeTrip(van.id, depMins, returnMins)) {
+      alert(`⛔ ${van.name} ya tiene un viaje que choca con este horario.`);
+      return;
+    }
+
+    const newTrip = {
+      id: state.nextTripId++,
+      vanId: van.id,
+      departIJ: fromMinutes(depMins),
+      returnIJ: fromMinutes(returnMins),
+      stops: [{
+        id: state.nextBookingId++,
+        hotel: action.hotel,
+        pickupTime: action.pickupTime,
+        bookings: [booking],
+      }],
+      createdAt: new Date().toLocaleTimeString('es-MX', { hour:'2-digit', minute:'2-digit' }),
+      isAnchor: state.trips.length === 0,
+    };
+    state.trips.push(newTrip);
+    log(`[NEW] ${name} — ${action.hotel} ${action.pickupTime} | ${pax} pax | ${van.name} (nuevo viaje)`, 'info');
+  }
+
+  state.nextRequestNum++;
+
+  // Reset form
+  document.getElementById('req-hotel').value = '';
+  document.getElementById('req-name').value  = '';
+  document.getElementById('req-pax').value   = 2;
+  document.getElementById('slot-suggestion').style.display = 'none';
+  document.getElementById('req-suggestion').style.display  = 'none';
+  window._pendingAction = null;
+  enableBtn(document.getElementById('confirm-btn'));
+
+  renderOps();
+  updateStats();
+  switchTab('ops');
+}
+
+// ════════════════════════════════════════════════════════════════
+//  DELETE BOOKING
+// ════════════════════════════════════════════════════════════════
+
+function deleteBooking(tripId, stopId, bookingId) {
+  if (!confirm('¿Eliminar esta reserva?')) return;
+  const trip = state.trips.find(t => t.id === tripId);
+  if (!trip) return;
+  const stop = trip.stops.find(s => s.id === stopId);
+  if (!stop) return;
+  const booking = stop.bookings.find(b => b.id === bookingId);
+  if (!booking) return;
+
+  stop.bookings = stop.bookings.filter(b => b.id !== bookingId);
+  log(`Reserva eliminada: ${booking.name} · ${stop.hotel}`, 'err');
+
+  // If the stop is now empty, remove it from the trip
+  if (stop.bookings.length === 0) {
+    trip.stops = trip.stops.filter(s => s.id !== stopId);
+    log(`Parada removida: ${stop.hotel} ya no tiene pasajeros en Trip #${trip.id}`, 'warn');
+    // If the trip has no stops left, remove the whole trip
+    if (trip.stops.length === 0) {
+      state.trips = state.trips.filter(t => t.id !== tripId);
+      log(`Viaje #${trip.id} eliminado (sin paradas restantes)`, 'warn');
+    } else {
+      // Otherwise recalculate the trip's route with remaining stops
+      recalcTrip(trip);
+      log(`Viaje #${trip.id} recalculado con ${trip.stops.length} parada(s)`, 'info');
+    }
+  }
+
+  renderOps();
+  updateStats();
+}
+
+// ════════════════════════════════════════════════════════════════
+//  RENDER OPS DASHBOARD
+// ════════════════════════════════════════════════════════════════
+
+function renderOps() {
+  const list = document.getElementById('ops-list');
+
+  if (state.trips.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="big">🚐</div>Sin viajes programados hoy.<br>Usa <strong>Nueva Solicitud</strong> para comenzar.</div>`;
+    updateStats();
+    return;
+  }
+
+  let html = '';
+  state.vans.forEach(van => {
+    const vanTrips = state.trips.filter(t => t.vanId === van.id)
+      .sort((a,b) => toMinutes(a.departIJ) - toMinutes(b.departIJ));
+    if (vanTrips.length === 0) return;
+
+    const freeAtStr = fromMinutes(vanAvailableAt(van.id));
+
+    html += `<div style="margin-bottom:14px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--ink);color:white;border-radius:8px 8px 0 0;font-size:0.78rem;font-weight:600;letter-spacing:0.5px;">
+        <span>🚐 ${van.name} &nbsp;·&nbsp; ${van.capacity} pax / viaje &nbsp;·&nbsp; ${vanTrips.length} viaje(s)</span>
+        <span style="color:var(--gold-light);">Libre ~ ${freeAtStr}</span>
+      </div>
+      <div style="border:1.5px solid var(--ink);border-top:none;border-radius:0 0 8px 8px;overflow:hidden;">`;
+
+    vanTrips.forEach(trip => {
+      const totalPax = tripPax(trip);
+      const isMulti  = trip.stops.length > 1;
+      const tripBadge = isMulti
+        ? `<span class="ops-badge" style="background:#FFF8E0;color:var(--gold-dark);">🔀 ${trip.stops.length} PARADAS</span>`
+        : (trip.isAnchor ? `<span class="ops-badge badge-anchor">⚓ ANCLA</span>` : `<span class="ops-badge badge-confirmed">✓ CONF.</span>`);
+
+      html += `<div style="background:#F8F6F0;padding:6px 12px;border-bottom:1px solid var(--border);font-size:0.72rem;color:#666;display:flex;justify-content:space-between;">
+        <span>Viaje #${trip.id} · Sale IJ ${trip.departIJ} · Regresa ~${trip.returnIJ}</span>
+        <span>${totalPax}/${van.capacity} pax ${tripBadge}</span>
+      </div>`;
+
+      trip.stops.forEach((stop, idx) => {
+        const stopHotel = stop.hotel;
+        const stopBookings = stop.bookings;
+        stopBookings.forEach(b => {
+          const cardClass = trip.isAnchor && !isMulti ? 'anchor' : 'confirmed';
+          html += `<div class="ops-card ${cardClass}" style="border-radius:0;border:none;border-bottom:1px solid var(--border);">
+            <div class="ops-time">
+              <div class="ops-pickup">${stop.pickupTime}</div>
+              ${isMulti ? `<div class="ops-depart">Parada ${idx+1}</div>` : `<div class="ops-depart">Sale ${trip.departIJ}</div>`}
+            </div>
+            <div>
+              <div class="ops-hotel">${stopHotel}</div>
+              <div class="ops-meta">${b.name} · ${b.pax} pax</div>
+            </div>
+            <div class="ops-right">
+              <div class="ops-pax">${b.pax}<small> pax</small></div>
+              <button class="ops-delete" onclick="deleteBooking(${trip.id},${stop.id},${b.id})" title="Eliminar">✕</button>
+            </div>
+          </div>`;
+        });
+      });
+    });
+
+    html += `</div></div>`;
+  });
+
+  list.innerHTML = html;
+  updateStats();
+}
+
+// ════════════════════════════════════════════════════════════════
+//  STATS
+// ════════════════════════════════════════════════════════════════
+
+function updateStats() {
+  const totalPax = state.trips.reduce((a,t) => a + tripPax(t), 0);
+  const totalTours = state.trips.reduce((a,t) =>
+    a + t.stops.reduce((b,s) => b + s.bookings.length, 0), 0);
+  const vansActive = new Set(state.trips.map(t => t.vanId)).size;
+
+  document.getElementById('stat-tours').textContent = totalTours;
+  document.getElementById('stat-pax').textContent   = totalPax;
+  document.getElementById('stat-vans-used').textContent = vansActive;
+
+  const freeTimes = state.vans.map(v => vanAvailableAt(v.id)).filter(t => t > 0);
+  const freeStr = freeTimes.length > 0 ? fromMinutes(Math.min(...freeTimes)) : 'Ya';
+  document.getElementById('stat-cap').textContent = freeStr;
+
+  const label = document.querySelector('.stat-box:last-child .stat-label');
+  if (label) label.textContent = 'Primera Van Libre';
+}
+
+// ════════════════════════════════════════════════════════════════
+//  FLEET MANAGEMENT
+// ════════════════════════════════════════════════════════════════
+
+function renderFleet() {
+  const grid = document.getElementById('fleet-grid');
+  const totalCap = state.vans.reduce((a,v) => a + v.capacity, 0);
+  const totalPax = state.trips.reduce((a,t) => a + tripPax(t), 0);
+
+  grid.innerHTML = state.vans.map(van => {
+    const vanTripCount = state.trips.filter(t => t.vanId === van.id).length;
+    const maxTripPax = state.trips.filter(t => t.vanId === van.id)
+      .map(t => tripPax(t));
+    const maxOnAnyTrip = maxTripPax.length > 0 ? Math.max(...maxTripPax) : 0;
+    const pct = van.capacity > 0 ? Math.round((maxOnAnyTrip / van.capacity) * 100) : 0;
+    const freeAt = vanAvailableAt(van.id);
+    const freeStr = freeAt > 0 ? '~' + fromMinutes(freeAt) : 'Disponible';
+
+    return `<div class="van-chip ${vanTripCount > 0 ? 'active-van' : ''}">
+      <button class="van-delete" onclick="removeVan('${van.id}')">✕</button>
+      <div class="van-name">${van.name}</div>
+      <div class="van-cap">Cap: ${van.capacity} pax · ${vanTripCount} viaje(s)</div>
+      <div class="van-used">Máx en un viaje: ${maxOnAnyTrip} pax</div>
+      <div style="font-size:0.65rem;color:var(--confirmed);margin-top:2px;">Libre: ${freeStr}</div>
+      <div class="van-pct"><div class="van-pct-fill" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+
+  const capDoc = document.getElementById('capacity-summary');
+  if (capDoc) capDoc.innerHTML = `<strong>${totalPax} pax</strong> programados en <strong>${state.trips.length} viaje(s)</strong> usando <strong>${state.vans.length} van(s)</strong>.`;
+  const bar = document.getElementById('total-cap-bar');
+  if (bar) bar.style.width = '0%';
+  const capLabel = document.getElementById('cap-label');
+  if (capLabel) capLabel.textContent = `${state.trips.length} viaje(s) programados`;
+}
+
+function addVan() {
+  const name = document.getElementById('new-van-name').value.trim();
+  const cap  = parseInt(document.getElementById('new-van-cap').value) || 8;
+  if (!name) { alert('Escribe un nombre para la van.'); return; }
+  if (state.vans.find(v => v.name.toLowerCase() === name.toLowerCase())) {
+    alert('Ya existe una van con ese nombre.'); return;
+  }
+  const id = 'van-' + name.toLowerCase().replace(/\s+/g,'-') + '-' + Date.now();
+  state.vans.push({ id, name, capacity: cap });
+  document.getElementById('new-van-name').value = '';
+  document.getElementById('new-van-cap').value = 8;
+  log(`Van agregada: ${name} (cap: ${cap})`, 'info');
+  renderFleet();
+}
+
+function removeVan(id) {
+  const van = state.vans.find(v => v.id === id);
+  if (!van) return;
+  if (state.trips.some(t => t.vanId === id)) {
+    alert(`${van.name} tiene viajes activos. Elimina las reservas primero.`); return;
+  }
+  if (!confirm(`¿Eliminar ${van.name}?`)) return;
+  state.vans = state.vans.filter(v => v.id !== id);
+  log(`Van eliminada: ${van.name}`, 'warn');
+  renderFleet();
+}
+
+// ════════════════════════════════════════════════════════════════
+//  RESET & EXPORT
+// ════════════════════════════════════════════════════════════════
+
+function resetDay() {
+  if (!confirm('¿Reiniciar todos los viajes del día? Esta acción no se puede deshacer.')) return;
+  state.trips = [];
+  state.nextTripId = 1;
+  state.nextBookingId = 1;
+  state.nextRequestNum = 1;
+  log('Día reiniciado.', 'warn');
+  renderOps();
+  updateStats();
+}
+
+function exportState() {
+  const snapshot = {
+    exportedAt: new Date().toLocaleString('es-MX'),
+    vans: state.vans,
+    trips: state.trips.map(t => ({
+      id: t.id,
+      vanId: t.vanId,
+      vanName: (state.vans.find(v => v.id === t.vanId) || {}).name,
+      departIJ: t.departIJ,
+      returnIJ: t.returnIJ,
+      isAnchor: t.isAnchor || false,
+      stops: t.stops.map(s => ({
+        id: s.id,
+        hotel: s.hotel,
+        pickupTime: s.pickupTime,
+        bookings: s.bookings.map(b => ({
+          id: b.id, name: b.name, pax: b.pax,
+        })),
+      })),
+      totalPax: tripPax(t),
+    })),
+    summary: {
+      totalTrips: state.trips.length,
+      totalPax: state.trips.reduce((a,t) => a + tripPax(t), 0),
+      vansActive: new Set(state.trips.map(t => t.vanId)).size,
+    },
+  };
+  const json = JSON.stringify(snapshot, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const ts = new Date().toLocaleTimeString('es-MX', {hour:'2-digit',minute:'2-digit'}).replace(':','-');
+  a.href = url;
+  a.download = `IJ-estado-${ts}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  log(`Estado exportado: ${snapshot.summary.totalTrips} viajes, ${snapshot.summary.totalPax} pax`, 'info');
+}
+
+// ════════════════════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════════════════════
+
+renderFleet();
+updateStats();
+</script>
+
+</body>
+</html>

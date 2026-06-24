@@ -1,0 +1,1636 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planificador de Grid de Instagram</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  :root{
+    --bg: #e3e3e3;
+    --phone: #ffffff;
+    --ink: #1c1c1c;
+    --muted: #8e8e8e;
+    --placeholder: #d4d4d4;
+    --placeholder-icon: #b8b8b8;
+    --accent: #C4521A;
+    --line: #ececec;
+    --ring1: #f9ce34;
+    --ring2: #ee2a7b;
+    --ring3: #6228d7;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    padding: 20px 12px 60px;
+  }
+  h1{
+    font-size: 1.2rem;
+    margin: 0 0 4px;
+    text-align:center;
+  }
+  .subtitle{
+    color: #6b6b6b;
+    font-size: 0.85rem;
+    margin: 0 auto 20px;
+    line-height: 1.4;
+    text-align:center;
+    max-width: 460px;
+  }
+
+  /* ---------- Phone mockup ---------- */
+  .phone{
+    background: var(--phone);
+    border-radius: 24px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+    max-width: 360px;
+    margin: 0 auto 24px;
+    padding: 14px 16px 10px;
+    overflow: hidden;
+  }
+  .header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom: 14px;
+  }
+  .header .username{
+    font-weight: 700;
+    font-size: 1rem;
+  }
+  .icon{
+    width: 22px;
+    height: 22px;
+    color: var(--ink);
+    flex-shrink:0;
+  }
+  .icon.muted{ color: var(--muted); }
+
+  .profile{
+    display:flex;
+    gap: 16px;
+    align-items:center;
+    margin-bottom: 12px;
+  }
+  .avatar{
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    flex-shrink:0;
+    background: conic-gradient(from 180deg, var(--ring1), var(--ring2), var(--ring3), var(--ring1));
+    padding: 3px;
+  }
+  .avatar{
+    position:relative;
+    cursor:pointer;
+  }
+  .avatar-inner{
+    width:100%;
+    height:100%;
+    border-radius:50%;
+    background: var(--placeholder);
+    border: 3px solid #fff;
+    background-size: cover;
+    background-position: center;
+  }
+  .avatar-overlay{
+    position:absolute;
+    inset:0;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background: rgba(0,0,0,0);
+    color: rgba(255,255,255,0);
+    font-size: 0.6rem;
+    font-weight:700;
+    text-align:center;
+    transition: background .15s, color .15s;
+    pointer-events:none;
+  }
+  .avatar:hover .avatar-overlay{
+    background: rgba(0,0,0,0.35);
+    color: rgba(255,255,255,0.95);
+  }
+  .profile-info{ flex: 1; min-width:0; }
+  .profile-info .name{
+    font-weight: 700;
+    font-size: 0.95rem;
+    margin-bottom: 2px;
+  }
+  .profile-info .tagline{
+    font-size: 0.82rem;
+    color: var(--ink);
+    margin-bottom: 2px;
+  }
+  .profile-info .stats{
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .profile-info .bio{
+    font-size: 0.78rem;
+    color: var(--ink);
+    line-height:1.5;
+  }
+  .profile-info .bio a{ color: #00376b; text-decoration:none; }
+  [contenteditable="true"]{
+    outline: none;
+    border-radius: 4px;
+    padding: 1px 3px;
+    margin: -1px -3px;
+  }
+  [contenteditable="true"]:hover{
+    background: #f5f5f5;
+  }
+  [contenteditable="true"]:focus{
+    background: #fdf1ea;
+    box-shadow: 0 0 0 1px var(--accent);
+  }
+  .edit-hint{
+    font-size: 0.68rem;
+    color: var(--accent);
+    text-align:center;
+    margin: -6px 0 10px;
+  }
+
+  .actions{
+    display:flex;
+    gap: 6px;
+    margin: 10px 0 14px;
+  }
+  .actions .btn{
+    flex:1;
+    text-align:center;
+    font-size: 0.78rem;
+    font-weight:600;
+    padding: 6px 0;
+    border-radius: 8px;
+    background: #f0f0f0;
+    color: var(--ink);
+  }
+  .actions .iconbtn{
+    flex: 0 0 32px;
+    border-radius: 8px;
+    background: #f0f0f0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .actions .iconbtn .icon{ width: 16px; height:16px; }
+
+  .stories, .highlights-row{
+    display:flex;
+    gap: 14px;
+    margin-bottom: 16px;
+    overflow-x:auto;
+    padding-bottom: 2px;
+  }
+  .story{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap: 4px;
+    flex-shrink:0;
+  }
+  .story .circle{
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--placeholder);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color: var(--muted);
+    font-size: 1.1rem;
+    font-weight:300;
+  }
+  .story .circle.add{
+    background: #fff;
+    border: 1.5px solid var(--ink);
+  }
+  .story .label{
+    font-size: 0.65rem;
+    color: var(--muted);
+  }
+
+  /* ---------- Highlights (historias destacadas) ---------- */
+  .highlight-circle-wrap{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap: 4px;
+    flex-shrink:0;
+    cursor:pointer;
+    width: 56px;
+  }
+  .highlight-circle{
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: var(--placeholder);
+    background-size: cover;
+    background-position: center;
+    border: 2px solid #ddd;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color: var(--muted);
+    font-size: 1.3rem;
+    font-weight:300;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .highlight-circle.active{
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px #fdf1ea;
+  }
+  .highlight-circle.add-new{
+    background: #fff;
+    border: 1.5px dashed var(--ink);
+    color: var(--ink);
+  }
+  .highlight-label{
+    font-size: 0.62rem;
+    color: var(--muted);
+    text-align:center;
+    max-width: 56px;
+    overflow:hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    border-radius: 4px;
+    padding: 0 2px;
+  }
+  .highlight-label[contenteditable="true"]:hover{
+    background: #f5f5f5;
+  }
+  .highlight-label[contenteditable="true"]:focus{
+    background: #fdf1ea;
+    white-space: normal;
+    outline: none;
+    box-shadow: 0 0 0 1px var(--accent);
+  }
+
+  .slots-row{
+    display:flex;
+    gap: 6px;
+    overflow-x:auto;
+    padding: 6px 2px 10px;
+  }
+  .slot{
+    position:relative;
+    flex: 0 0 64px;
+    aspect-ratio: 9/16;
+    background: var(--placeholder);
+    border-radius: 8px;
+    overflow:hidden;
+    cursor:pointer;
+  }
+  .slot img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+  }
+  .slot.empty::after{
+    content:"";
+    position:absolute;
+    inset: 38%;
+    border-radius: 4px;
+    background: var(--placeholder-icon);
+    opacity: 0.6;
+  }
+  .slot.target-highlight{
+    outline: 3px solid var(--accent);
+    outline-offset: -3px;
+    z-index: 2;
+  }
+
+  .tabs{
+    display:flex;
+    border-top: 1px solid var(--line);
+  }
+  .tab{
+    flex:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding: 10px 0;
+    border-bottom: 1.5px solid transparent;
+  }
+  .tab.active{
+    border-bottom-color: var(--ink);
+  }
+  .tab.active .icon{ color: var(--ink); }
+  .tab:not(.active) .icon{ color: var(--muted); }
+  .tab .icon{ width: 22px; height: 22px; }
+
+  /* ---------- Grid ---------- */
+  .grid-controls{
+    display:flex;
+    justify-content: space-between;
+    align-items:center;
+    margin: 10px 0 6px;
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+  .grid-controls .row{ display:flex; gap:6px; }
+  .gridbtn{
+    border: none;
+    background: #f0f0f0;
+    color: var(--ink);
+    font-size: 0.72rem;
+    font-weight:600;
+    padding: 4px 8px;
+    border-radius: 6px;
+    cursor:pointer;
+  }
+  .gridbtn:hover{ background:#e4e4e4; }
+  .gridbtn:disabled{ color:#ccc; cursor:not-allowed; }
+
+  .grid{
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+  }
+  .cell{
+    position: relative;
+    aspect-ratio: 4/5;
+    background: var(--placeholder);
+    border-radius: 4px;
+    overflow: hidden;
+    cursor: pointer;
+  }
+  .cell img{
+    width:100%;
+    height:100%;
+    object-fit: cover;
+    display:block;
+  }
+  .cell.empty::after{
+    content: "";
+    position:absolute;
+    inset: 30%;
+    border-radius: 4px;
+    background: var(--placeholder-icon);
+    opacity: 0.6;
+  }
+  .cell.target-highlight{
+    outline: 3px solid var(--accent);
+    outline-offset: -3px;
+    z-index: 2;
+  }
+  .badge{
+    position:absolute;
+    top:3px;
+    left:3px;
+    background: rgba(0,0,0,0.55);
+    color:#fff;
+    font-size: 0.6rem;
+    font-weight:700;
+    padding: 1px 5px;
+    border-radius: 4px;
+    line-height:1.4;
+    z-index:1;
+  }
+  .removebtn{
+    position:absolute;
+    top:3px;
+    right:3px;
+    background: rgba(0,0,0,0.55);
+    color:#fff;
+    border:none;
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    line-height:1;
+    padding:0;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:1;
+  }
+  .removebtn:hover{background: rgba(0,0,0,0.8);}
+
+  .viewbtn{
+    position:absolute;
+    bottom:3px;
+    right:3px;
+    background: rgba(0,0,0,0.55);
+    color:#fff;
+    border:none;
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    line-height:1;
+    padding:0;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:1;
+  }
+  .viewbtn:hover{ background: rgba(0,0,0,0.8); }
+
+  /* ---------- Compact / full grid view ---------- */
+  .grid-scroll{
+    overflow: hidden;
+  }
+  .grid-scroll.compact{
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* ---------- Modals (post / story preview) ---------- */
+  .modal-overlay{
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index: 1000;
+    padding: 20px;
+  }
+  .modal-overlay.hidden{ display:none; }
+  .modal-card{
+    background: #fff;
+    border-radius: 16px;
+    overflow: hidden;
+    max-width: 340px;
+    width: 100%;
+    max-height: 90vh;
+    display:flex;
+    flex-direction:column;
+  }
+  .modal-header{
+    display:flex;
+    align-items:center;
+    gap: 8px;
+    padding: 10px 12px;
+  }
+  .modal-header .avatar-mini{
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--placeholder);
+    background-size: cover;
+    background-position: center;
+    flex-shrink:0;
+  }
+  .modal-header .username{
+    font-weight: 700;
+    font-size: 0.85rem;
+    flex: 1;
+  }
+  .modal-close{
+    background: none;
+    border: none;
+    font-size: 1.1rem;
+    cursor:pointer;
+    color: var(--ink);
+    line-height:1;
+    padding: 2px 4px;
+  }
+  .modal-card img{
+    width: 100%;
+    display:block;
+    background: var(--placeholder);
+  }
+  /* Post modal */
+  .post-modal img{
+    aspect-ratio: 1/1;
+    object-fit: contain;
+    background: #000;
+  }
+  .post-actions{
+    display:flex;
+    gap: 14px;
+    align-items:center;
+    padding: 10px 12px 4px;
+    font-size: 1.1rem;
+  }
+  .post-actions .spacer{ flex:1; }
+  .post-likes{
+    padding: 4px 12px 0;
+    font-weight: 700;
+    font-size: 0.85rem;
+  }
+  .post-caption{
+    padding: 4px 12px 12px;
+    font-size: 0.82rem;
+    color: var(--ink);
+  }
+  /* Story modal */
+  .story-modal{
+    background: #1c1c1c;
+    max-width: 280px;
+  }
+  .story-modal .modal-header{
+    position: absolute;
+    top: 12px;
+    left: 0;
+    right: 0;
+    padding: 4px 12px;
+    z-index: 2;
+  }
+  .story-modal .modal-header .username,
+  .story-modal .modal-header .time{
+    color: #fff;
+  }
+  .story-modal .modal-header .time{
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.8);
+    margin-right: 6px;
+  }
+  .story-modal .modal-header .modal-close{
+    color: #fff;
+  }
+  .story-progress{
+    position:absolute;
+    top: 6px;
+    left: 8px;
+    right: 8px;
+    display:flex;
+    gap: 4px;
+    z-index: 2;
+  }
+  .story-progress span{
+    flex:1;
+    height: 2px;
+    background: rgba(255,255,255,0.95);
+    border-radius: 2px;
+  }
+  .story-img-wrap{
+    position: relative;
+    aspect-ratio: 9/16;
+  }
+  .story-img-wrap img{
+    width:100%;
+    height:100%;
+    object-fit: cover;
+  }
+  .story-nav{
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    cursor: pointer;
+  }
+  .story-nav-left{ left: 0; width: 30%; }
+  .story-nav-right{ right: 0; width: 30%; }
+  .story-footer{
+    display:flex;
+    align-items:center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: #1c1c1c;
+  }
+  .story-footer .send-box{
+    flex:1;
+    border: 1px solid rgba(255,255,255,0.5);
+    border-radius: 20px;
+    padding: 8px 14px;
+    color: rgba(255,255,255,0.8);
+    font-size: 0.8rem;
+  }
+  .story-footer .icon{ color:#fff; width:20px; height:20px; }
+
+  .bottomnav{
+    display:flex;
+    justify-content:space-between;
+    padding: 12px 4px 4px;
+    margin-top: 4px;
+  }
+  .bottomnav .icon{ width: 22px; height: 22px; color: var(--ink); }
+
+  /* ---------- Control panels ---------- */
+  .panel{
+    background: #fff;
+    border: 1px solid #e7e0d6;
+    border-radius: 12px;
+    padding: 14px;
+    margin: 0 auto 16px;
+    max-width: 360px;
+  }
+  .panel h2{
+    font-size: 0.88rem;
+    margin: 0 0 10px;
+    color: #2D5016;
+    letter-spacing: 0.02em;
+  }
+  .row{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    flex-wrap: wrap;
+  }
+  button.main, .filebtn{
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 9px 14px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  button.main:hover, .filebtn:hover{ opacity:.88; }
+  button.ghost{
+    background: transparent;
+    color: #2D5016;
+    border: 1px solid #2D5016;
+    padding: 8px 13px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    cursor:pointer;
+    font-weight:600;
+  }
+  input[type=file]{display:none;}
+
+  .tray{
+    display:flex;
+    gap:8px;
+    overflow-x:auto;
+    padding: 4px 2px;
+    min-height: 64px;
+  }
+  .tray-empty{
+    color: var(--muted);
+    font-size: 0.8rem;
+    padding: 18px 0;
+  }
+  .tray-item{
+    flex: 0 0 auto;
+    width: 58px;
+    text-align:center;
+    cursor: pointer;
+    position: relative;
+    border-radius: 8px;
+    padding: 3px;
+    border: 2px solid transparent;
+  }
+  .tray-item.selected{
+    border-color: var(--accent);
+    background: #fdf1ea;
+  }
+  .tray-item img{
+    width: 100%;
+    aspect-ratio: 4/5;
+    object-fit: cover;
+    border-radius: 4px;
+    display:block;
+  }
+  .tray-item .fname{
+    font-size: 0.58rem;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 2px;
+  }
+  .hint{
+    font-size: 0.76rem;
+    color: var(--muted);
+    margin-top: 8px;
+    line-height: 1.5;
+    max-width: 360px;
+    margin-left:auto;
+    margin-right:auto;
+  }
+  footer{
+    text-align:center;
+    color: #999;
+    font-size: 0.72rem;
+    margin-top: 10px;
+  }
+</style>
+</head>
+<body>
+
+<h1>📐 Planificador de Grid de Instagram</h1>
+<p class="subtitle">
+  Sube tus imágenes, tócalas para seleccionarlas y luego toca un cuadro gris para colocarlas (o intercambiarlas).
+  Cuando termines, descarga el ZIP: cada imagen se renombrará según su posición en el grid.
+</p>
+
+<!-- Phone mockup -->
+<div class="phone">
+  <div class="header">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    <span class="username" contenteditable="true">deli_snack.cun</span>
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
+  </div>
+
+  <div class="profile">
+    <div class="avatar" id="avatarBtn">
+      <div class="avatar-inner" id="avatarInner"></div>
+      <div class="avatar-overlay">Cambiar<br>logo</div>
+      <input type="file" id="avatarInput" accept="image/*" style="display:none;">
+    </div>
+    <div class="profile-info">
+      <div class="name" contenteditable="true">deli_snack.cun</div>
+      <div class="tagline" contenteditable="true">Deli Snack</div>
+      <div class="stats" contenteditable="true">1 seguidor · 0 seguidos</div>
+      <div class="bio" contenteditable="true">🌿 Vegetales y frutas deshidratados<br>🔥 Jícama · Pepino · Camote · +10 sabores<br>🛵📦 Pedidos por WhatsApp 998 123 4567</div>
+    </div>
+  </div>
+  <div class="edit-hint">Toca el logo para cambiarlo, o cualquier texto para editarlo</div>
+
+  <div class="actions">
+    <div class="btn">Following ▾</div>
+    <div class="btn">Message</div>
+    <div class="btn">Contact</div>
+    <div class="iconbtn"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+  </div>
+
+  <div class="highlights-row" id="highlightsRow"></div>
+
+  <div class="tabs">
+    <div class="tab active">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="6" height="6" rx="1"/><rect x="9.5" y="3" width="6" height="6" rx="1"/><rect x="16" y="3" width="5" height="6" rx="1"/><rect x="3" y="9.5" width="6" height="6" rx="1"/><rect x="9.5" y="9.5" width="6" height="6" rx="1"/><rect x="16" y="9.5" width="5" height="6" rx="1"/><rect x="3" y="16" width="6" height="5" rx="1"/><rect x="9.5" y="16" width="6" height="5" rx="1"/><rect x="16" y="16" width="5" height="5" rx="1"/></svg>
+    </div>
+    <div class="tab">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M10 8l5 4-5 4V8z"/></svg>
+    </div>
+    <div class="tab">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="12" cy="10" r="3"/><path d="M7 18c0-2.5 2-4 5-4s5 1.5 5 4"/></svg>
+    </div>
+  </div>
+
+  <!-- Editable grid -->
+  <div class="grid-scroll" id="gridScroll">
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <div class="bottomnav">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M12 8v8M8 12h8"/></svg>
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="3"/><path d="M10 9l5 3-5 3V9z"/></svg>
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+  </div>
+</div>
+
+<!-- Controles del grid -->
+<div class="panel">
+  <h2>Controles del grid</h2>
+  <div class="grid-controls">
+    <span id="gridCount">9 espacios</span>
+    <div class="row">
+      <button class="gridbtn" id="autoOrderGridBtn">Auto-ordenar</button>
+      <button class="gridbtn" id="addRowBtn">+ fila</button>
+      <button class="gridbtn" id="removeRowBtn">– fila</button>
+      <select class="gridbtn" id="ratioSelect" style="cursor:pointer;">
+        <option value="4/5" selected>4:5</option>
+        <option value="1/1">1:1</option>
+      </select>
+    </div>
+  </div>
+  <div class="grid-controls" style="margin-top:8px;">
+    <span></span>
+    <div class="row">
+      <button class="gridbtn" id="fullViewBtn">Vista completa</button>
+      <button class="gridbtn" id="compactViewBtn">Vista compacta</button>
+    </div>
+  </div>
+</div>
+
+<!-- Upload tray -->
+<div class="panel">
+  <h2>Tus imágenes</h2>
+  <div class="row" style="margin-bottom:8px;">
+    <label class="filebtn">
+      Elegir imágenes
+      <input type="file" id="fileInput" accept="image/*" multiple>
+    </label>
+    <button class="ghost" id="clearTrayBtn">Limpiar bandeja</button>
+  </div>
+  <div class="tray" id="tray">
+    <div class="tray-empty">Aún no hay imágenes. Toca "Elegir imágenes" para comenzar.</div>
+  </div>
+  <div class="hint">
+    Toca una imagen de aquí para seleccionarla, luego toca un cuadro gris del grid para colocarla.
+    Toca una imagen ya colocada para moverla/intercambiarla, o usa la ✕ para devolverla a esta bandeja.
+  </div>
+</div>
+
+<!-- Download -->
+<div class="panel">
+  <h2>Descargar</h2>
+  <div class="row">
+    <button class="main" id="downloadBtn">⬇️ Descargar ZIP renombrado</button>
+  </div>
+  <div class="hint" id="placedCount" style="margin-top:8px;"></div>
+</div>
+
+<!-- Historias destacadas -->
+<div class="panel">
+  <h2>Imágenes para historias destacadas</h2>
+  <div class="row" style="margin-bottom:8px;">
+    <label class="filebtn">
+      Elegir imágenes
+      <input type="file" id="storyFileInput" accept="image/*" multiple>
+    </label>
+    <button class="ghost" id="clearStoryTrayBtn">Limpiar bandeja</button>
+  </div>
+  <div class="tray" id="storyTray">
+    <div class="tray-empty">Sube las imágenes que quieras usar en tus destacados.</div>
+  </div>
+  <div class="hint">
+    Toca "+ Nuevo" arriba en el círculo para crear un destacado. Toca su etiqueta para nombrarlo.
+    Toca el destacado para abrirlo, luego selecciona una imagen de aquí y toca un espacio para colocarla.
+    La primera historia se usa como portada del círculo.
+  </div>
+</div>
+
+<!-- Editor del destacado activo -->
+<div class="panel" id="activeHighlightSection" style="display:none;">
+  <h2 id="activeHighlightLabel">Editando destacado</h2>
+  <div class="row" style="margin-bottom:6px;">
+    <button class="gridbtn" id="autoOrderHighlightBtn">Auto-ordenar</button>
+    <button class="gridbtn" id="addSlotBtn">+ historia</button>
+    <button class="gridbtn" id="removeSlotBtn">– historia</button>
+    <button class="gridbtn" id="deleteHighlightBtn" style="background:#fde2e2; color:#a33;">Eliminar destacado</button>
+  </div>
+  <div class="slots-row" id="slotsRow"></div>
+</div>
+
+<!-- Download highlights -->
+<div class="panel">
+  <h2>Descargar destacados</h2>
+  <div class="row">
+    <button class="main" id="downloadHighlightsBtn">⬇️ Descargar ZIP de destacados</button>
+  </div>
+  <div class="hint" id="highlightsPlacedCount" style="margin-top:8px;"></div>
+</div>
+
+<footer>Hecho para planificar tu feed de @deli_snack.cun · Todo se procesa en tu navegador, nada se sube a internet.</footer>
+
+<!-- Post preview modal -->
+<div class="modal-overlay hidden" id="postModal">
+  <div class="modal-card post-modal">
+    <div class="modal-header">
+      <div class="avatar-mini" id="postModalAvatar"></div>
+      <span class="username" id="postModalUsername">username</span>
+      <button class="modal-close" id="postModalClose">✕</button>
+    </div>
+    <img id="postModalImg" src="" alt="">
+    <div class="post-actions">
+      <span>♡</span><span>💬</span><span>➤</span>
+      <span class="spacer"></span>
+      <span>🔖</span>
+    </div>
+    <div class="post-likes">131 likes</div>
+    <div class="post-caption"><b id="postModalCaptionUser">username</b> Any example text written here</div>
+  </div>
+</div>
+
+<!-- Story preview modal -->
+<div class="modal-overlay hidden" id="storyModal">
+  <div class="modal-card story-modal">
+    <div class="story-progress" id="storyModalProgress"></div>
+    <div class="modal-header">
+      <div class="avatar-mini" id="storyModalAvatar"></div>
+      <span class="username" id="storyModalUsername">username</span>
+      <span class="time">3h</span>
+      <button class="modal-close" id="storyModalClose">✕</button>
+    </div>
+    <div class="story-img-wrap">
+      <img id="storyModalImg" src="" alt="">
+      <div class="story-nav story-nav-left" id="storyNavLeft"></div>
+      <div class="story-nav story-nav-right" id="storyNavRight"></div>
+    </div>
+    <div class="story-footer">
+      <div class="send-box">Enviar mensaje</div>
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21l7.78-7.55 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ---------- Avatar / logo upload ----------
+  const avatarBtn = document.getElementById('avatarBtn');
+  const avatarInput = document.getElementById('avatarInput');
+  const avatarInner = document.getElementById('avatarInner');
+
+  avatarBtn.addEventListener('click', () => avatarInput.click());
+  avatarInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    avatarInner.style.backgroundImage = `url(${url})`;
+    e.target.value = '';
+  });
+
+  // ---------- Preview modals (post / story) ----------
+  const postModal = document.getElementById('postModal');
+  const postModalImg = document.getElementById('postModalImg');
+  const postModalAvatar = document.getElementById('postModalAvatar');
+  const postModalUsername = document.getElementById('postModalUsername');
+  const postModalCaptionUser = document.getElementById('postModalCaptionUser');
+
+  const storyModal = document.getElementById('storyModal');
+  const storyModalImg = document.getElementById('storyModalImg');
+  const storyModalAvatar = document.getElementById('storyModalAvatar');
+  const storyModalUsername = document.getElementById('storyModalUsername');
+  const storyModalProgress = document.getElementById('storyModalProgress');
+
+  function currentUsername() {
+    const el = document.querySelector('.header .username');
+    return el ? el.textContent.trim() : 'username';
+  }
+  function currentAvatarBg() {
+    return avatarInner.style.backgroundImage || '';
+  }
+
+  function openPostModal(url) {
+    postModalImg.src = url;
+    const name = currentUsername();
+    postModalUsername.textContent = name;
+    postModalCaptionUser.textContent = name;
+    postModalAvatar.style.backgroundImage = currentAvatarBg();
+    postModal.classList.remove('hidden');
+  }
+
+  // ---------- Story modal with left/right navigation ----------
+  let currentStoryHighlight = null;
+  let currentStorySlotIndex = 0;
+
+  function showStorySlot(highlight, index) {
+    if (index < 0 || index >= highlight.slots.length) return; // out of bounds, no-op
+    currentStoryHighlight = highlight;
+    currentStorySlotIndex = index;
+
+    const imgId = highlight.slots[index];
+    const img = imgId !== null ? storyImages.find(i => i.id === imgId) : null;
+    storyModalImg.src = img ? img.url : '';
+    storyModalImg.style.background = img ? '' : '#333';
+
+    storyModalUsername.textContent = currentUsername();
+    storyModalAvatar.style.backgroundImage = currentAvatarBg();
+
+    storyModalProgress.innerHTML = '';
+    highlight.slots.forEach((_, i) => {
+      const bar = document.createElement('span');
+      if (i !== index) bar.style.opacity = '0.4';
+      storyModalProgress.appendChild(bar);
+    });
+  }
+
+  function openStoryModal(highlight, index) {
+    showStorySlot(highlight, index);
+    storyModal.classList.remove('hidden');
+  }
+
+  document.getElementById('storyNavLeft').addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (currentStoryHighlight) showStorySlot(currentStoryHighlight, currentStorySlotIndex - 1);
+  });
+  document.getElementById('storyNavRight').addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (currentStoryHighlight) showStorySlot(currentStoryHighlight, currentStorySlotIndex + 1);
+  });
+
+  function closeModals() {
+    postModal.classList.add('hidden');
+    storyModal.classList.add('hidden');
+  }
+
+  document.getElementById('postModalClose').addEventListener('click', closeModals);
+  document.getElementById('storyModalClose').addEventListener('click', closeModals);
+  postModal.addEventListener('click', (e) => { if (e.target === postModal) closeModals(); });
+  storyModal.addEventListener('click', (e) => { if (e.target === storyModal) closeModals(); });
+
+  // ---------- Compact / full grid view ----------
+  const gridScroll = document.getElementById('gridScroll');
+  let gridViewMode = 'full';
+
+  document.getElementById('fullViewBtn').addEventListener('click', () => {
+    gridViewMode = 'full';
+    applyGridViewMode();
+  });
+  document.getElementById('compactViewBtn').addEventListener('click', () => {
+    gridViewMode = 'compact';
+    applyGridViewMode();
+  });
+
+  function applyGridViewMode() {
+    document.getElementById('fullViewBtn').style.outline = gridViewMode === 'full' ? `2px solid var(--accent)` : 'none';
+    document.getElementById('compactViewBtn').style.outline = gridViewMode === 'compact' ? `2px solid var(--accent)` : 'none';
+
+    if (gridViewMode === 'compact') {
+      gridScroll.classList.add('compact');
+      // measure one row's height (cell + gap) and show ~4 rows
+      const firstCell = gridEl.querySelector('.cell');
+      if (firstCell) {
+        const cellHeight = firstCell.getBoundingClientRect().height;
+        const gap = 4; // matches .grid gap in CSS
+        const visibleRows = Math.min(4, grid.length / cols);
+        gridScroll.style.maxHeight = `${visibleRows * cellHeight + (visibleRows - 1) * gap}px`;
+      }
+    } else {
+      gridScroll.classList.remove('compact');
+      gridScroll.style.maxHeight = '';
+    }
+  }
+
+  // ---------- State ----------
+  let images = []; // {id, name, url, blob}
+  let grid = Array(9).fill(null); // array of image ids or null
+  let cols = 3;
+  let selected = null; // {id, fromCell: index|null}
+  let nextId = 1;
+  let ratio = '4/5';
+
+  const tray = document.getElementById('tray');
+  const gridEl = document.getElementById('grid');
+  const gridCount = document.getElementById('gridCount');
+  const placedCount = document.getElementById('placedCount');
+
+  // ---------- File upload ----------
+  document.getElementById('fileInput').addEventListener('change', (e) => {
+    const files = Array.from(e.target.files);
+    files.forEach(file => {
+      const url = URL.createObjectURL(file);
+      images.push({ id: nextId++, name: file.name, url, blob: file });
+    });
+    e.target.value = '';
+    render();
+  });
+
+  document.getElementById('clearTrayBtn').addEventListener('click', () => {
+    images = images.filter(img => grid.includes(img.id));
+    selected = null;
+    render();
+  });
+
+  // ---------- Grid size / ratio controls ----------
+  document.getElementById('addRowBtn').addEventListener('click', () => {
+    grid = Array(cols).fill(null).concat(grid);
+    if (selected && selected.fromCell !== null) {
+      selected.fromCell += cols;
+    }
+    render();
+  });
+
+  document.getElementById('removeRowBtn').addEventListener('click', () => {
+    if (grid.length <= cols) return;
+    grid = grid.slice(cols);
+    if (selected && selected.fromCell !== null) {
+      if (selected.fromCell < cols) {
+        selected = null;
+      } else {
+        selected.fromCell -= cols;
+      }
+    }
+    render();
+  });
+
+  // Numbering: bottom-right cell = 1, increases going left across the row,
+  // then continues on the row above (right to left), and so on upward.
+  function getDisplayNumber(index) {
+    const totalRows = grid.length / cols;
+    const row = Math.floor(index / cols);
+    const col = index % cols;
+    const rowsFromBottom = totalRows - 1 - row;
+    const colFromRight = cols - 1 - col;
+    return rowsFromBottom * cols + colFromRight + 1;
+  }
+
+  document.getElementById('ratioSelect').addEventListener('change', (e) => {
+    ratio = e.target.value;
+    render();
+  });
+
+  // ---------- Selection / placement logic ----------
+  function selectFromTray(imgId) {
+    if (selected && selected.id === imgId && selected.fromCell === null) {
+      selected = null;
+    } else {
+      selected = { id: imgId, fromCell: null };
+    }
+    render();
+  }
+
+  function clickCell(index) {
+    const occupantId = grid[index];
+
+    if (!selected) {
+      if (occupantId !== null) {
+        selected = { id: occupantId, fromCell: index };
+        render();
+      }
+      return;
+    }
+
+    if (selected.fromCell === null) {
+      grid[index] = selected.id;
+    } else {
+      if (selected.fromCell === index) {
+        selected = null;
+        render();
+        return;
+      }
+      const temp = grid[index];
+      grid[index] = selected.id;
+      grid[selected.fromCell] = temp;
+    }
+
+    selected = null;
+    render();
+  }
+
+  function removeFromGrid(index, ev) {
+    ev.stopPropagation();
+    grid[index] = null;
+    if (selected && selected.fromCell === index) selected = null;
+    render();
+  }
+
+  // ---------- Render ----------
+  function render() {
+    const placedIds = new Set(grid.filter(x => x !== null));
+    const unplaced = images.filter(img => !placedIds.has(img.id));
+
+    tray.innerHTML = '';
+    if (unplaced.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'tray-empty';
+      empty.textContent = images.length === 0
+        ? 'Aún no hay imágenes. Toca "Elegir imágenes" para comenzar.'
+        : 'Todas las imágenes están colocadas en el grid.';
+      tray.appendChild(empty);
+    } else {
+      unplaced.forEach(img => {
+        const item = document.createElement('div');
+        item.className = 'tray-item' + (selected && selected.id === img.id && selected.fromCell === null ? ' selected' : '');
+        item.innerHTML = `<img src="${img.url}" alt=""><div class="fname">${escapeHtml(img.name)}</div>`;
+        item.addEventListener('click', () => selectFromTray(img.id));
+        tray.appendChild(item);
+      });
+    }
+
+    gridEl.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+    gridEl.innerHTML = '';
+    grid.forEach((imgId, index) => {
+      const cell = document.createElement('div');
+      const img = imgId !== null ? images.find(i => i.id === imgId) : null;
+      cell.className = 'cell' + (img ? '' : ' empty');
+      cell.style.aspectRatio = ratio;
+      if (selected && selected.fromCell === index) {
+        cell.classList.add('target-highlight');
+      }
+      if (img) {
+        cell.innerHTML = `
+          <img src="${img.url}" alt="">
+          <span class="badge">${getDisplayNumber(index)}</span>
+          <button class="removebtn" title="Quitar">✕</button>
+          <button class="viewbtn" title="Ver">🔍</button>
+        `;
+        cell.querySelector('.removebtn').addEventListener('click', (e) => removeFromGrid(index, e));
+        cell.querySelector('.viewbtn').addEventListener('click', (e) => { e.stopPropagation(); openPostModal(img.url); });
+      } else {
+        cell.innerHTML = `<span class="badge">${getDisplayNumber(index)}</span>`;
+      }
+      cell.addEventListener('click', () => clickCell(index));
+      gridEl.appendChild(cell);
+    });
+
+    gridCount.textContent = `${grid.length} espacios (${grid.length / cols} filas)`;
+    const placed = grid.filter(x => x !== null).length;
+    placedCount.textContent = `${placed} de ${grid.length} colocadas`;
+    applyGridViewMode();
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // Extracts the leading number from "34 - Pareja playa, espalda, corona.jpg" -> 34
+  function parseLeadingNumber(filename) {
+    const dotIndex = filename.lastIndexOf('.');
+    const baseName = dotIndex !== -1 ? filename.slice(0, dotIndex) : filename;
+    const match = baseName.match(/^(\d+)\s*-\s*/);
+    return match ? parseInt(match[1], 10) : null;
+  }
+
+  // ---------- Auto-ordenar grid ----------
+  document.getElementById('autoOrderGridBtn').addEventListener('click', () => {
+    const numbered = images
+      .map(img => ({ img, num: parseLeadingNumber(img.name) }))
+      .filter(x => x.num !== null);
+
+    if (numbered.length === 0) {
+      alert('Ninguna imagen tiene un número al inicio del nombre (ej. "5 - descripción.jpg").');
+      return;
+    }
+
+    if (!confirm('Esto reorganizará el grid completo según los números en los nombres de archivo. ¿Continuar?')) {
+      return;
+    }
+
+    const maxNum = Math.max(...numbered.map(x => x.num));
+    const rows = Math.max(1, Math.ceil(maxNum / cols));
+    grid = Array(rows * cols).fill(null);
+
+    const usedNums = new Set();
+    const conflicts = [];
+    numbered.forEach(({ img, num }) => {
+      if (usedNums.has(num)) { conflicts.push(img.name); return; }
+      usedNums.add(num);
+      for (let i = 0; i < grid.length; i++) {
+        if (getDisplayNumber(i) === num) { grid[i] = img.id; break; }
+      }
+    });
+
+    selected = null;
+    render();
+
+    if (conflicts.length > 0) {
+      alert('Hay números repetidos; estas imágenes quedaron sin colocar:\n' + conflicts.join('\n'));
+    }
+  });
+
+  // ---------- Download ZIP ----------
+  document.getElementById('downloadBtn').addEventListener('click', async () => {
+    const placedEntries = grid
+      .map((imgId, index) => ({ imgId, position: getDisplayNumber(index) }))
+      .filter(e => e.imgId !== null);
+
+    if (placedEntries.length === 0) {
+      alert('Coloca al menos una imagen en el grid antes de descargar.');
+      return;
+    }
+
+    const zip = new JSZip();
+
+    placedEntries.forEach(({ imgId, position }) => {
+      const img = images.find(i => i.id === imgId);
+      if (!img) return;
+
+      const dotIndex = img.name.lastIndexOf('.');
+      const ext = dotIndex !== -1 ? img.name.slice(dotIndex + 1) : 'jpg';
+      const baseName = dotIndex !== -1 ? img.name.slice(0, dotIndex) : img.name;
+
+      const prefixMatch = baseName.match(/^\d+\s*-\s*(.+)$/);
+      const restOfName = prefixMatch ? prefixMatch[1] : baseName;
+
+      const newName = `${position} - ${restOfName}.${ext}`;
+      zip.file(newName, img.blob);
+    });
+
+    const blob = await zip.generateAsync({ type: 'blob' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'instagram_grid.zip';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
+
+  // Initial render
+  render();
+
+  // ================= Historias destacadas =================
+  let storyImages = []; // {id, name, url, blob}
+  let storyNextId = 1;
+  let highlights = []; // {id, name, slots: [imgId|null,...]}
+  let highlightNextId = 1;
+  let activeHighlightId = null;
+  let storySelected = null; // {id, from: {type:'tray'} | {type:'slot', hid, index}}
+
+  const storyTray = document.getElementById('storyTray');
+  const highlightsRow = document.getElementById('highlightsRow');
+  const activeSection = document.getElementById('activeHighlightSection');
+  const activeLabel = document.getElementById('activeHighlightLabel');
+  const slotsRow = document.getElementById('slotsRow');
+  const highlightsPlacedCount = document.getElementById('highlightsPlacedCount');
+
+  document.getElementById('storyFileInput').addEventListener('change', (e) => {
+    const files = Array.from(e.target.files);
+    files.forEach(file => {
+      const url = URL.createObjectURL(file);
+      storyImages.push({ id: storyNextId++, name: file.name, url, blob: file });
+    });
+    e.target.value = '';
+    renderStories();
+  });
+
+  document.getElementById('clearStoryTrayBtn').addEventListener('click', () => {
+    const placedIds = new Set();
+    highlights.forEach(h => h.slots.forEach(s => { if (s !== null) placedIds.add(s); }));
+    storyImages = storyImages.filter(img => placedIds.has(img.id));
+    storySelected = null;
+    renderStories();
+  });
+
+  function addHighlight() {
+    const id = highlightNextId++;
+    highlights.push({ id, name: 'Destacado', slots: Array(5).fill(null) });
+    activeHighlightId = id;
+    renderStories();
+  }
+
+  function selectHighlight(hid) {
+    activeHighlightId = (activeHighlightId === hid) ? null : hid;
+    storySelected = null;
+    renderStories();
+  }
+
+  function deleteHighlight(hid) {
+    highlights = highlights.filter(h => h.id !== hid);
+    if (activeHighlightId === hid) activeHighlightId = null;
+    storySelected = null;
+    renderStories();
+  }
+
+  document.getElementById('addSlotBtn').addEventListener('click', () => {
+    const active = highlights.find(h => h.id === activeHighlightId);
+    if (active) active.slots.push(null);
+    renderStories();
+  });
+
+  document.getElementById('removeSlotBtn').addEventListener('click', () => {
+    const active = highlights.find(h => h.id === activeHighlightId);
+    if (active && active.slots.length > 1) {
+      if (storySelected && storySelected.from.type === 'slot' && storySelected.from.hid === active.id && storySelected.from.index === active.slots.length - 1) {
+        storySelected = null;
+      }
+      active.slots.pop();
+    }
+    renderStories();
+  });
+
+  document.getElementById('deleteHighlightBtn').addEventListener('click', () => {
+    if (activeHighlightId !== null) deleteHighlight(activeHighlightId);
+  });
+
+  function selectFromStoryTray(imgId) {
+    if (storySelected && storySelected.id === imgId && storySelected.from.type === 'tray') {
+      storySelected = null;
+    } else {
+      storySelected = { id: imgId, from: { type: 'tray' } };
+    }
+    renderStories();
+  }
+
+  function clickSlot(hid, index) {
+    const h = highlights.find(x => x.id === hid);
+    const occupant = h.slots[index];
+
+    if (!storySelected) {
+      if (occupant !== null) {
+        storySelected = { id: occupant, from: { type: 'slot', hid, index } };
+        renderStories();
+      }
+      return;
+    }
+
+    if (storySelected.from.type === 'tray') {
+      h.slots[index] = storySelected.id;
+    } else {
+      const src = storySelected.from;
+      if (src.hid === hid && src.index === index) {
+        storySelected = null;
+        renderStories();
+        return;
+      }
+      const srcH = highlights.find(x => x.id === src.hid);
+      const temp = h.slots[index];
+      h.slots[index] = storySelected.id;
+      srcH.slots[src.index] = temp;
+    }
+
+    storySelected = null;
+    renderStories();
+  }
+
+  function removeFromSlot(hid, index, ev) {
+    ev.stopPropagation();
+    const h = highlights.find(x => x.id === hid);
+    h.slots[index] = null;
+    if (storySelected && storySelected.from.type === 'slot' && storySelected.from.hid === hid && storySelected.from.index === index) {
+      storySelected = null;
+    }
+    renderStories();
+  }
+
+  function renderStories() {
+    // Tray: story images not placed in any highlight
+    const placedIds = new Set();
+    highlights.forEach(h => h.slots.forEach(s => { if (s !== null) placedIds.add(s); }));
+    const unplaced = storyImages.filter(img => !placedIds.has(img.id));
+
+    storyTray.innerHTML = '';
+    if (unplaced.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'tray-empty';
+      empty.textContent = storyImages.length === 0
+        ? 'Sube las imágenes que quieras usar en tus destacados.'
+        : 'Todas las imágenes están colocadas en algún destacado.';
+      storyTray.appendChild(empty);
+    } else {
+      unplaced.forEach(img => {
+        const item = document.createElement('div');
+        item.className = 'tray-item' + (storySelected && storySelected.id === img.id && storySelected.from.type === 'tray' ? ' selected' : '');
+        item.innerHTML = `<img src="${img.url}" alt=""><div class="fname">${escapeHtml(img.name)}</div>`;
+        item.addEventListener('click', () => selectFromStoryTray(img.id));
+        storyTray.appendChild(item);
+      });
+    }
+
+    // Highlight circles
+    highlightsRow.innerHTML = '';
+    highlights.forEach(h => {
+      const wrap = document.createElement('div');
+      wrap.className = 'highlight-circle-wrap';
+
+      const cover = h.slots[0] !== null ? storyImages.find(i => i.id === h.slots[0]) : null;
+      const circle = document.createElement('div');
+      circle.className = 'highlight-circle' + (activeHighlightId === h.id ? ' active' : '');
+      if (cover) circle.style.backgroundImage = `url(${cover.url})`;
+      circle.addEventListener('click', () => selectHighlight(h.id));
+
+      const label = document.createElement('div');
+      label.className = 'highlight-label';
+      label.contentEditable = 'true';
+      label.textContent = h.name;
+      label.addEventListener('click', (e) => e.stopPropagation());
+      label.addEventListener('input', () => { h.name = label.textContent; });
+      label.addEventListener('blur', () => {
+        if (label.textContent.trim() === '') {
+          label.textContent = 'Destacado';
+          h.name = 'Destacado';
+        }
+        renderStories();
+      });
+
+      wrap.appendChild(circle);
+      wrap.appendChild(label);
+      highlightsRow.appendChild(wrap);
+    });
+
+    // "+ Nuevo" button
+    const addWrap = document.createElement('div');
+    addWrap.className = 'highlight-circle-wrap';
+    const addCircle = document.createElement('div');
+    addCircle.className = 'highlight-circle add-new';
+    addCircle.textContent = '+';
+    addCircle.addEventListener('click', addHighlight);
+    const addLabel = document.createElement('div');
+    addLabel.className = 'highlight-label';
+    addLabel.textContent = 'Nuevo';
+    addWrap.appendChild(addCircle);
+    addWrap.appendChild(addLabel);
+    highlightsRow.appendChild(addWrap);
+
+    // Active highlight editor
+    const active = highlights.find(h => h.id === activeHighlightId);
+    if (!active) {
+      activeSection.style.display = 'none';
+    } else {
+      activeSection.style.display = 'block';
+      const placedInActive = active.slots.filter(s => s !== null).length;
+      activeLabel.textContent = `Editando: ${active.name} (${placedInActive}/${active.slots.length})`;
+
+      slotsRow.innerHTML = '';
+      active.slots.forEach((imgId, index) => {
+        const slot = document.createElement('div');
+        const img = imgId !== null ? storyImages.find(i => i.id === imgId) : null;
+        slot.className = 'slot' + (img ? '' : ' empty');
+        if (storySelected && storySelected.from.type === 'slot' && storySelected.from.hid === active.id && storySelected.from.index === index) {
+          slot.classList.add('target-highlight');
+        }
+        if (img) {
+          slot.innerHTML = `
+            <img src="${img.url}" alt="">
+            <span class="badge">${index + 1}</span>
+            <button class="removebtn" title="Quitar">✕</button>
+            <button class="viewbtn" title="Ver">🔍</button>
+          `;
+          slot.querySelector('.removebtn').addEventListener('click', (e) => removeFromSlot(active.id, index, e));
+          slot.querySelector('.viewbtn').addEventListener('click', (e) => { e.stopPropagation(); openStoryModal(active, index); });
+        } else {
+          slot.innerHTML = `<span class="badge">${index + 1}</span>`;
+        }
+        slot.addEventListener('click', () => clickSlot(active.id, index));
+        slotsRow.appendChild(slot);
+      });
+    }
+
+    const totalPlaced = highlights.reduce((sum, h) => sum + h.slots.filter(s => s !== null).length, 0);
+    highlightsPlacedCount.textContent = highlights.length === 0
+      ? 'Aún no tienes destacados. Toca "+ Nuevo" para crear uno.'
+      : `${totalPlaced} imágenes colocadas en ${highlights.length} destacado(s).`;
+  }
+
+  // ---------- Auto-ordenar destacado activo ----------
+  document.getElementById('autoOrderHighlightBtn').addEventListener('click', () => {
+    const active = highlights.find(h => h.id === activeHighlightId);
+    if (!active) return;
+
+    // Consider images not placed in OTHER highlights (unplaced or already in this one)
+    const candidates = storyImages.filter(img => {
+      const placedElsewhere = highlights.some(h => h.id !== active.id && h.slots.includes(img.id));
+      return !placedElsewhere;
+    });
+
+    const numbered = candidates
+      .map(img => ({ img, num: parseLeadingNumber(img.name) }))
+      .filter(x => x.num !== null);
+
+    if (numbered.length === 0) {
+      alert('Ninguna imagen disponible tiene un número al inicio del nombre (ej. "3 - portada.jpg").');
+      return;
+    }
+
+    if (!confirm(`Esto reorganizará las historias de "${active.name}" según los números en los nombres. ¿Continuar?`)) {
+      return;
+    }
+
+    const maxNum = Math.max(...numbered.map(x => x.num));
+    active.slots = Array(maxNum).fill(null);
+
+    const usedNums = new Set();
+    const conflicts = [];
+    numbered.forEach(({ img, num }) => {
+      if (usedNums.has(num)) { conflicts.push(img.name); return; }
+      usedNums.add(num);
+      active.slots[num - 1] = img.id;
+    });
+
+    storySelected = null;
+    renderStories();
+
+    if (conflicts.length > 0) {
+      alert('Hay números repetidos; estas imágenes quedaron sin colocar:\n' + conflicts.join('\n'));
+    }
+  });
+
+  // ---------- Download highlights ZIP ----------
+  document.getElementById('downloadHighlightsBtn').addEventListener('click', async () => {
+    const zip = new JSZip();
+    let any = false;
+    const usedFolderNames = {};
+
+    highlights.forEach(h => {
+      let safeFolder = (h.name || 'Destacado').trim().replace(/[\\/:*?"<>|]/g, '_');
+      if (safeFolder === '') safeFolder = 'Destacado';
+      // avoid collisions between highlights with the same name
+      if (usedFolderNames[safeFolder] !== undefined) {
+        usedFolderNames[safeFolder]++;
+        safeFolder = `${safeFolder} (${usedFolderNames[safeFolder]})`;
+      } else {
+        usedFolderNames[safeFolder] = 0;
+      }
+
+      h.slots.forEach((imgId, index) => {
+        if (imgId === null) return;
+        const img = storyImages.find(i => i.id === imgId);
+        if (!img) return;
+        any = true;
+
+        const dotIndex = img.name.lastIndexOf('.');
+        const ext = dotIndex !== -1 ? img.name.slice(dotIndex + 1) : 'jpg';
+        const baseName = dotIndex !== -1 ? img.name.slice(0, dotIndex) : img.name;
+
+        const prefixMatch = baseName.match(/^\d+\s*-\s*(.+)$/);
+        const restOfName = prefixMatch ? prefixMatch[1] : baseName;
+
+        const newName = `${index + 1} - ${restOfName}.${ext}`;
+        zip.file(`${safeFolder}/${newName}`, img.blob);
+      });
+    });
+
+    if (!any) {
+      alert('Coloca al menos una imagen en algún destacado antes de descargar.');
+      return;
+    }
+
+    const blob = await zip.generateAsync({ type: 'blob' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'historias_destacadas.zip';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
+
+  // Initial render
+  renderStories();
+</script>
+
+</body>
+</html>
