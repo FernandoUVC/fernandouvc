@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mis Herramientas · Fernando</title>
+  <meta name="theme-color" content="#0d1117">
+  <link rel="manifest" href="manifest.json">
+  <style>
+    :root {
+      --bg:       #0d1117;
+      --surface:  #161b22;
+      --hover:    #1c2330;
+      --border:   #30363d;
+      --text:     #e6edf3;
+      --muted:    #7d8590;
+      --accent:   #58a6ff;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      min-height: 100dvh;
+      padding: 32px 16px 60px;
+    }
+
+    /* Subtle dot grid overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: radial-gradient(circle, #30363d 1px, transparent 1px);
+      background-size: 28px 28px;
+      opacity: 0.35;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    header {
+      position: relative;
+      z-index: 1;
+      max-width: 860px;
+      margin: 0 auto 36px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .header-left {}
+
+    .eyebrow {
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.3px;
+    }
+
+    .tool-count {
+      font-size: 12px;
+      color: var(--muted);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 12px;
+      white-space: nowrap;
+      align-self: center;
+    }
+
+    /* ── Grid ── */
+    .grid {
+      position: relative;
+      z-index: 1;
+      max-width: 860px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    @media (min-width: 540px) {
+      .grid { grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    }
+
+    @media (min-width: 780px) {
+      .grid { grid-template-columns: repeat(4, 1fr); }
+    }
+
+    /* ── Card ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px 16px 16px;
+      text-decoration: none;
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: background 0.14s ease, border-color 0.14s ease, transform 0.14s ease;
+      position: relative;
+      overflow: hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .card:hover,
+    .card:focus-visible {
+      background: var(--hover);
+      border-color: var(--card-color, var(--border));
+      transform: translateY(-2px);
+      outline: none;
+    }
+
+    /* Color glow top-left */
+    .card::before {
+      content: '';
+      position: absolute;
+      top: -24px;
+      left: -24px;
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      background: var(--card-color, transparent);
+      opacity: 0.11;
+      filter: blur(22px);
+      transition: opacity 0.2s;
+      pointer-events: none;
+    }
+
+    .card:hover::before { opacity: 0.2; }
+
+    /* Color bar top edge */
+    .card::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--card-color, transparent);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .card:hover::after { opacity: 1; }
+
+    .card-icon {
+      font-size: 26px;
+      line-height: 1;
+    }
+
+    .card-name {
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.25;
+    }
+
+    .card-desc {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.45;
+      flex: 1;
+    }
+
+    .card-tag {
+      margin-top: 4px;
+      font-size: 10px;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: var(--card-color, var(--muted));
+      opacity: 0.85;
+      font-weight: 600;
+    }
+
+    /* ── Empty state ── */
+    .empty {
+      grid-column: 1 / -1;
+      text-align: center;
+      color: var(--muted);
+      font-size: 14px;
+      padding: 40px 0;
+    }
+
+    /* ── Footer ── */
+    footer {
+      position: relative;
+      z-index: 1;
+      max-width: 860px;
+      margin: 36px auto 0;
+      font-size: 11px;
+      color: var(--muted);
+      text-align: right;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-left">
+      <p class="eyebrow">fernandouvc</p>
+      <h1>Mis herramientas</h1>
+    </div>
+    <span class="tool-count" id="count">—</span>
+  </header>
+
+  <div class="grid" id="grid"></div>
+
+  <footer id="footer"></footer>
+
+  <script>
+    // ╔══════════════════════════════════════════════════════╗
+    //  EDITA AQUÍ — agrega o quita herramientas del launcher
+    //  Campos:
+    //    name  → nombre que aparece en la card
+    //    desc  → descripción corta (1 línea idealmente)
+    //    icon  → emoji
+    //    color → color hexadecimal del acento de la card
+    //    tag   → etiqueta pequeña debajo (ej: "Casa", "UVC")
+    //    url   → URL completa de la herramienta
+    // ╚══════════════════════════════════════════════════════╝
+
+    const tools = [
+      {
+        name: "Herramienta 1",
+        desc: "Descripción corta de qué hace",
+        icon: "🛒",
+        color: "#f97316",
+        tag: "Casa",
+        url: "https://fernandouvc.github.io/repo-aqui"
+      },
+      {
+        name: "Herramienta 2",
+        desc: "Descripción corta de qué hace",
+        icon: "🥗",
+        color: "#22c55e",
+        tag: "Salud",
+        url: "https://fernandouvc.github.io/repo-aqui"
+      },
+      {
+        name: "Herramienta 3",
+        desc: "Descripción corta de qué hace",
+        icon: "🏨",
+        color: "#3b82f6",
+        tag: "UVC",
+        url: "https://fernandouvc.github.io/repo-aqui"
+      },
+      {
+        name: "Herramienta 4",
+        desc: "Descripción corta de qué hace",
+        icon: "📄",
+        color: "#a855f7",
+        tag: "UVC",
+        url: "https://fernandouvc.github.io/repo-aqui"
+      },
+    ];
+
+    // ── Render ─────────────────────────────────────────────
+    const grid  = document.getElementById('grid');
+    const count = document.getElementById('count');
+    const footer = document.getElementById('footer');
+
+    if (tools.length === 0) {
+      grid.innerHTML = '<p class="empty">Sin herramientas configuradas aún.</p>';
+    } else {
+      tools.forEach(t => {
+        const a = document.createElement('a');
+        a.href        = t.url;
+        a.target      = '_blank';
+        a.rel         = 'noopener';
+        a.className   = 'card';
+        a.style.setProperty('--card-color', t.color);
+        a.innerHTML = `
+          <div class="card-icon">${t.icon}</div>
+          <div class="card-name">${t.name}</div>
+          <div class="card-desc">${t.desc}</div>
+          <div class="card-tag">${t.tag}</div>
+        `;
+        grid.appendChild(a);
+      });
+    }
+
+    count.textContent = tools.length === 1
+      ? '1 herramienta'
+      : `${tools.length} herramientas`;
+
+    const now = new Date();
+    footer.textContent =
+      `Actualizado: ${now.toLocaleDateString('es-MX', { day:'2-digit', month:'short', year:'numeric' })}`;
+
+    // ── PWA service worker ──────────────────────────────────
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    }
+  </script>
+
+</body>
+</html>
